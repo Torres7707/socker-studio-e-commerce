@@ -1,54 +1,88 @@
-# React + TypeScript + Vite
+# My React TypeScript App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern React application with TypeScript, built using Vite for fast development and optimized builds.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- ⚡ **Fast Development**: Vite for instant HMR (Hot Module Replacement)
+- 🔥 **React 18**: Latest React features with hooks
+- 📝 **TypeScript**: Full type safety and IntelliSense support
+- 🎨 **ESLint**: Code quality and consistency
+- 📦 **pnpm**: Fast and disk space efficient package manager
 
-## Expanding the ESLint configuration
+## Quick Start
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Prerequisites
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+- Node.js 18+
+- pnpm (recommended)
+
+### Install Dependencies
+
+```bash
+pnpm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Development
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+```bash
+pnpm dev
 ```
+
+The app will start at `http://localhost:5173` (or similar port).
+
+### Build for Production
+
+```bash
+pnpm build
+```
+
+### Preview Production Build
+
+```bash
+pnpm preview
+```
+
+## Project Structure
+
+```
+.
+├── src/                 # Source code
+│   ├── components/     # React components
+│   ├── pages/         # Page components
+│   ├── hooks/         # Custom React hooks
+│   ├── utils/         # Utility functions
+│   └── App.tsx        # Main App component
+├── public/            # Static assets
+├── .gitignore        # Git ignore rules
+├── index.html         # HTML entry point
+├── package.json       # Project dependencies
+├── tsconfig.json      # TypeScript configuration
+└── vite.config.ts     # Vite configuration
+```
+
+## Available Scripts
+
+- `pnpm dev` - Start development server
+- `pnpm build` - Build for production
+- `pnpm preview` - Preview production build
+- `pnpm lint` - Run ESLint
+- `pnpm type-check` - Run TypeScript type checking
+
+## Technologies Used
+
+- [Vite](https://vitejs.dev/) - Build tool and dev server
+- [React](https://reactjs.org/) - UI library
+- [TypeScript](https://www.typescriptlang.org/) - Type-safe JavaScript
+- [ESLint](https://eslint.org/) - Linter for JavaScript/TypeScript
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react) - React support for Vite
+
+## Development Tips
+
+1. **TypeScript**: Full type coverage ensures better code quality and fewer runtime errors
+2. **Fast Refresh**: Changes appear instantly without losing component state
+3. **HMR**: Works with all file types (JS, TS, JSX, TSX, CSS, etc.)
+
+## License
+
+MIT
