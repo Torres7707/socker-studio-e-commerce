@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+/* Scandinavian design theme */
+@theme {
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Scandinavian color palette - soft, muted, natural tones */
+  --color-snow: #FAFAFA;
+  --color-frost: #F5F5F5;
+  --color-mist: #E8E8E8;
+  --color-stone: #D1D1D1;
+  --color-slate: #9CA3AF;
+  --color-ash: #6B7280;
+  --color-charcoal: #374151;
+  --color-obsidian: #1F2937;
+
+  /* Accent colors - soft blues and sage greens */
+  --color-nordic-blue: #5B8FA8;
+  --color-nordic-blue-light: #7BA3B8;
+  --color-sage: #8BA888;
+  --color-sage-light: #A7C4A5;
+  --color-cedar: #A89B8B;
+  --color-rose-ash: #C9A9A6;
+}
+
+@layer base {
+  * {
+    @apply border-stone-200;
+  }
+
+  body {
+    @apply bg-snow text-charcoal antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
