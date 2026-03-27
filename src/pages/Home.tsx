@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useCartStore } from '@/store/cartStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { useFilterStore, type FilterState } from '@/store/filterStore';
-import { ToastContainer, useToast } from '@/components/ui/toast';
+import { toast } from 'sonner';
 import { products, categories } from '@/data/products';
 import { type Product } from '@/schemas';
 import {
@@ -61,7 +61,6 @@ function Home() {
 		clearSearchHistory,
 		getSearchSuggestions,
 	} = useFilterStore();
-	const toast = useToast();
 	const [searchQuery, setSearchQuery] = useState('');
 	const [showFilters, setShowFilters] = useState(false);
 	const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
@@ -103,8 +102,10 @@ function Home() {
 		const item = cart.find((item) => item.product.id === productId);
 		if (item && item.quantity > 1) {
 			useCartStore.getState().updateQuantity(productId, item.quantity - 1);
-		} else {
+			toast.info(`Removed one ${item.product.name} from cart`);
+		} else if (item) {
 			removeItem(productId);
+			toast.info(`Removed ${item.product.name} from cart`);
 		}
 	};
 
@@ -619,8 +620,6 @@ function Home() {
 				</div>
 			)}
 
-			{/* Toast Container */}
-			<ToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
 		</div>
 	);
 }
