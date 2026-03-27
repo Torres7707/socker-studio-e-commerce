@@ -1,12 +1,19 @@
+import { useEffect, useRef } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider, useAuth } from '@/context/AuthContext'
+import { useAuthStore } from '@/store/authStore'
 import Login from '@/components/Login'
 import Register from '@/pages/Register'
 import Home from '@/pages/Home'
 import ReadmeGenerator from '@/pages/ReadmeGenerator'
+import ProductDetail from '@/pages/ProductDetail'
+import Cart from '@/pages/Cart'
+import Checkout from '@/pages/Checkout'
+import Profile from '@/pages/Profile'
+import Favorites from '@/pages/Favorites'
+import OrderTracking from '@/pages/OrderTracking'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated } = useAuthStore()
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
   }
@@ -19,6 +26,12 @@ function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/generate" element={<ReadmeGenerator />} />
+      <Route path="/product/:id" element={<ProductDetail />} />
+      <Route path="/cart" element={<Cart />} />
+      <Route path="/checkout" element={<Checkout />} />
+      <Route path="/profile" element={<Profile />} />
+      <Route path="/favorites" element={<Favorites />} />
+      <Route path="/order/:orderId" element={<OrderTracking />} />
       <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/generate" replace />} />
     </Routes>
@@ -26,11 +39,19 @@ function AppRoutes() {
 }
 
 function App() {
+  const initializeAuthListener = useAuthStore((state) => state.initializeAuthListener)
+  const initialized = useRef(false)
+
+  useEffect(() => {
+    if (!initialized.current) {
+      initialized.current = true
+      initializeAuthListener()
+    }
+  }, [initializeAuthListener])
+
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <AppRoutes />
     </BrowserRouter>
   )
 }
