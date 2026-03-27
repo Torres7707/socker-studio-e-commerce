@@ -1,10 +1,7 @@
 import { SYSTEM_PROMPT, buildUserPrompt } from './readmePrompt';
+import { type GenerateResult } from '@/schemas';
 
 const API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-
-export interface GenerateResult {
-	markdown: string;
-}
 
 export async function generateReadme(code: string): Promise<GenerateResult> {
 	const apiKey = import.meta.env.VITE_ZHIPU_API_KEY;

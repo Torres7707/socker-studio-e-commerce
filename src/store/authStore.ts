@@ -9,15 +9,7 @@ import {
   type AuthCredential
 } from 'firebase/auth'
 import { auth, googleProvider, githubProvider } from '@/lib/firebase'
-
-export interface User {
-  id: string
-  username: string
-  email: string
-  name: string
-  photoURL?: string
-  provider?: 'credentials' | 'google' | 'github'
-}
+import { type User } from '@/schemas'
 
 interface AuthState {
   user: User | null

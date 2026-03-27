@@ -1,16 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-
-export interface Review {
-  id: string
-  productId: string
-  userId: string
-  userName: string
-  rating: number
-  comment: string
-  date: string
-  helpful: number
-}
+import { type Review } from '@/schemas'
 
 interface ReviewState {
   reviews: Review[]

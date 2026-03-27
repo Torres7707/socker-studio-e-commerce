@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuthStore } from '@/store/authStore'
 import { useCartStore } from '@/store/cartStore'
 import { useReviewStore } from '@/store/reviewStore'
-import { products, type Product } from '@/data/products'
+import { products } from '@/data/products'
 import {
   ShoppingCart,
   Heart,

@@ -15,14 +15,6 @@ vi.mock('firebase/auth', () => ({
   linkWithCredential: vi.fn(),
 }))
 
-const mockUser = {
-  id: '1',
-  username: 'testuser',
-  email: 'test@example.com',
-  name: 'Test User',
-  provider: 'credentials' as const,
-}
-
 describe('AuthStore', () => {
   beforeEach(() => {
     useAuthStore.setState({

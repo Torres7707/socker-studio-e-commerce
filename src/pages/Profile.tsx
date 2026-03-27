@@ -11,7 +11,6 @@ import {
   LogOut,
   ChevronRight,
   MapPin,
-  CreditCard,
   Package,
   Settings,
   Edit2,

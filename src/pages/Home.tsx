@@ -5,9 +5,10 @@ import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/store/authStore';
 import { useCartStore } from '@/store/cartStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
-import { useFilterStore } from '@/store/filterStore';
+import { useFilterStore, type FilterState } from '@/store/filterStore';
 import { ToastContainer, useToast } from '@/components/ui/toast';
-import { products, categories, type Product } from '@/data/products';
+import { products, categories } from '@/data/products';
+import { type Product } from '@/schemas';
 import {
 	Cat,
 	ShoppingCart,
@@ -21,6 +22,14 @@ import {
 	Filter,
 	X,
 } from 'lucide-react';
+
+const SORT_OPTIONS = [
+	{ value: 'default', label: 'Default' },
+	{ value: 'price-asc', label: 'Price: Low to High' },
+	{ value: 'price-desc', label: 'Price: High to Low' },
+	{ value: 'rating', label: 'Highest Rated' },
+	{ value: 'newest', label: 'Newest' },
+] as const satisfies readonly { value: FilterState['sortBy']; label: string }[];
 
 function Home() {
 	const { user, logout } = useAuthStore();
@@ -397,16 +406,10 @@ function Home() {
 							<div>
 								<h3 className="font-medium text-charcoal mb-3">Sort By</h3>
 								<div className="flex flex-wrap gap-2">
-									{[
-										{ value: 'default', label: 'Default' },
-										{ value: 'price-asc', label: 'Price: Low to High' },
-										{ value: 'price-desc', label: 'Price: High to Low' },
-										{ value: 'rating', label: 'Highest Rated' },
-										{ value: 'newest', label: 'Newest' },
-									].map((option) => (
+									{SORT_OPTIONS.map((option) => (
 										<button
 											key={option.value}
-											onClick={() => setSortBy(option.value as any)}
+											onClick={() => setSortBy(option.value)}
 											className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
 												sortBy === option.value
 													? 'bg-nordic-blue text-white'

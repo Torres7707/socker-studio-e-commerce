@@ -152,7 +152,7 @@ function Login() {
                 <Checkbox
                   id="remember"
                   checked={rememberMe}
-                  onCheckedChange={setRememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked === true)}
                 />
                 <label
                   htmlFor="remember"

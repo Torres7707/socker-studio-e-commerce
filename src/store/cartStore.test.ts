@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useCartStore } from './cartStore'
-import type { Product } from '@/data/products'
+import { type Product } from '@/schemas'
 
 const mockProduct: Product = {
   id: '1',

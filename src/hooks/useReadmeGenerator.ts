@@ -1,9 +1,8 @@
 import { useState, useCallback } from 'react'
 import { generateReadme } from '@/lib/readmeApi'
+import { type GeneratorState } from '@/schemas'
 
 const LINE_LIMIT = 2000
-
-export type GeneratorState = 'idle' | 'loading' | 'success' | 'error'
 
 export interface UseReadmeGeneratorReturn {
   state: GeneratorState
