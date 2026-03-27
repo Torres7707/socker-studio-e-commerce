@@ -8,7 +8,7 @@ import {
   CardContent,
   CardFooter,
 } from '@/components/ui/card'
-import { Loader2, ArrowRight, User, Mail, Lock } from 'lucide-react'
+import { Cat, Loader2, ArrowRight, User, Mail, Lock } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 
 function Register() {
@@ -90,23 +90,13 @@ function Register() {
         {/* Logo and header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-nordic-blue/10 mb-4">
-            <svg
-              className="w-6 h-6 text-nordic-blue"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            >
-              <path d="M12 2L2 7l10 5 10-5-10-5z" />
-              <path d="M2 17l10 5 10-5" />
-              <path d="M2 12l10 5 10-5" />
-            </svg>
+            <Cat className="w-6 h-6 text-nordic-blue" />
           </div>
           <h1 className="text-2xl font-semibold text-charcoal tracking-tight">
-            Create account
+            Join Socker Studio
           </h1>
           <p className="text-slate mt-1">
-            Join us and start shopping
+            Create your account and start designing
           </p>
         </div>
 
@@ -128,7 +118,7 @@ function Register() {
                   <Input
                     id="name"
                     type="text"
-                    placeholder="Enter your full name"
+                    placeholder="Enter your display name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
@@ -145,7 +135,7 @@ function Register() {
                   <Input
                     id="username"
                     type="text"
-                    placeholder="Choose a username"
+                    placeholder="Choose your Socker ID"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
@@ -162,7 +152,7 @@ function Register() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder="Enter your email address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -179,7 +169,7 @@ function Register() {
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Create a password"
+                    placeholder="Create a secure password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -216,11 +206,11 @@ function Register() {
                 {isLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Creating account...
+                    Setting up your studio...
                   </>
                 ) : (
                   <>
-                    Create account
+                    Join Studio
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -284,7 +274,7 @@ function Register() {
 
               {/* Sign in link */}
               <p className="text-sm text-slate">
-                Already have an account?{' '}
+                Already a Socker?{' '}
                 <Link
                   to="/login"
                   className="text-nordic-blue hover:text-nordic-blue-light font-medium transition-colors"

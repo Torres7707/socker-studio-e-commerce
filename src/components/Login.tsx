@@ -9,7 +9,7 @@ import {
   CardContent,
   CardFooter,
 } from '@/components/ui/card'
-import { Loader2, ArrowRight, User, Lock } from 'lucide-react'
+import { Cat, Loader2, ArrowRight, User, Lock } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 
 function Login() {
@@ -85,23 +85,13 @@ function Login() {
         {/* Logo and header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-nordic-blue/10 mb-4">
-            <svg
-              className="w-6 h-6 text-nordic-blue"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            >
-              <path d="M12 2L2 7l10 5 10-5-10-5z" />
-              <path d="M2 17l10 5 10-5" />
-              <path d="M2 12l10 5 10-5" />
-            </svg>
+            <Cat className="w-6 h-6 text-nordic-blue" />
           </div>
           <h1 className="text-2xl font-semibold text-charcoal tracking-tight">
-            Welcome back
+            Welcome to Socker Studio
           </h1>
           <p className="text-slate mt-1">
-            Sign in to continue to your account
+            Sign in to access your creative workspace
           </p>
         </div>
 
@@ -123,7 +113,7 @@ function Login() {
                   <Input
                     id="username"
                     type="text"
-                    placeholder="Enter your username"
+                    placeholder="Enter your Socker ID"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
@@ -168,7 +158,7 @@ function Login() {
                   htmlFor="remember"
                   className="text-sm text-slate cursor-pointer select-none"
                 >
-                  Remember me on this device
+                  Keep me signed in
                 </label>
               </div>
             </CardContent>
@@ -187,7 +177,7 @@ function Login() {
                   </>
                 ) : (
                   <>
-                    Sign in
+                    Enter Studio
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -255,16 +245,16 @@ function Login() {
         {/* Footer */}
         <div className="text-center mt-6 space-y-3">
           <p className="text-sm text-slate">
-            Don't have an account?{' '}
+            New to Socker Studio?{' '}
             <Link
               to="/register"
               className="text-nordic-blue hover:text-nordic-blue-light font-medium transition-colors"
             >
-              Create one
+              Join us
             </Link>
           </p>
           <p className="text-xs text-slate/60">
-            By signing in, you agree to our{' '}
+            By signing in, you agree to Socker Studio's{' '}
             <a href="#" className="underline hover:text-slate transition-colors">
               Terms of Service
             </a>{' '}

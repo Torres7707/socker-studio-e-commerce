@@ -11,6 +11,7 @@ import Checkout from '@/pages/Checkout'
 import Profile from '@/pages/Profile'
 import Favorites from '@/pages/Favorites'
 import OrderTracking from '@/pages/OrderTracking'
+import AboutSocker from '@/pages/AboutSocker'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore()
@@ -32,6 +33,7 @@ function AppRoutes() {
       <Route path="/profile" element={<Profile />} />
       <Route path="/favorites" element={<Favorites />} />
       <Route path="/order/:orderId" element={<OrderTracking />} />
+      <Route path="/about" element={<AboutSocker />} />
       <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/generate" replace />} />
     </Routes>

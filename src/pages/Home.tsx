@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { useFilterStore } from '@/store/filterStore';
 import { ToastContainer, useToast } from '@/components/ui/toast';
 import { products, categories, type Product } from '@/data/products';
 import {
+	Cat,
 	ShoppingCart,
 	Heart,
 	Search,
@@ -24,8 +25,18 @@ import {
 function Home() {
 	const { user, logout } = useAuthStore();
 	const navigate = useNavigate();
-	const { items: cart, addItem, removeItem, getItemCount, getTotal } = useCartStore();
-	const { favorites, toggleFavorite, getCount: getFavoritesCount } = useFavoritesStore();
+	const {
+		items: cart,
+		addItem,
+		removeItem,
+		getItemCount,
+		getTotal,
+	} = useCartStore();
+	const {
+		favorites,
+		toggleFavorite,
+		getCount: getFavoritesCount,
+	} = useFavoritesStore();
 	const {
 		priceRange,
 		minRating,
@@ -50,11 +61,14 @@ function Home() {
 	const filteredProducts = products
 		.filter((product) => {
 			const matchesCategory =
-				selectedCategories.length === 0 || selectedCategories.includes('All') || selectedCategories.includes(product.category);
+				selectedCategories.length === 0 ||
+				selectedCategories.includes('All') ||
+				selectedCategories.includes(product.category);
 			const matchesSearch =
 				product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
 				product.description.toLowerCase().includes(searchQuery.toLowerCase());
-			const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
+			const matchesPrice =
+				product.price >= priceRange[0] && product.price <= priceRange[1];
 			const matchesRating = product.rating >= minRating;
 			return matchesCategory && matchesSearch && matchesPrice && matchesRating;
 		})
@@ -74,11 +88,6 @@ function Home() {
 		});
 
 	const searchSuggestions = getSearchSuggestions(searchQuery);
-
-	const addToCart = (product: Product) => {
-		addItem(product);
-		toast.success(`Added ${product.name} to cart`);
-	};
 
 	const removeFromCart = (productId: string, e: React.MouseEvent) => {
 		e.stopPropagation();
@@ -141,16 +150,7 @@ function Home() {
 						{/* Logo */}
 						<div className="flex items-center gap-2">
 							<div className="w-8 h-8 rounded-lg bg-nordic-blue flex items-center justify-center">
-								<svg
-									className="w-4 h-4 text-white"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									strokeWidth="2"
-								>
-									<path d="M12 2L2 7l10 5 10-5-10-5z" />
-									<path d="M2 17l10 5 10-5" />
-								</svg>
+								<Cat className="w-4 h-4 text-white" />
 							</div>
 							<span className="text-lg font-semibold text-charcoal">
 								Socker Studio
@@ -173,18 +173,18 @@ function Home() {
 
 						{/* Actions */}
 						<div className="flex items-center gap-4">
-						{/* Cart */}
-						<button
-							onClick={() => navigate('/cart')}
-							className="relative p-2 text-charcoal hover:text-nordic-blue transition-colors"
-						>
-							<ShoppingCart className="w-5 h-5" />
-							{cartCount > 0 && (
-								<span className="absolute -top-1 -right-1 w-5 h-5 bg-nordic-blue text-white text-xs rounded-full flex items-center justify-center">
-									{cartCount}
-								</span>
-							)}
-						</button>
+							{/* Cart */}
+							<button
+								onClick={() => navigate('/cart')}
+								className="relative p-2 text-charcoal hover:text-nordic-blue transition-colors"
+							>
+								<ShoppingCart className="w-5 h-5" />
+								{cartCount > 0 && (
+									<span className="absolute -top-1 -right-1 w-5 h-5 bg-nordic-blue text-white text-xs rounded-full flex items-center justify-center">
+										{cartCount}
+									</span>
+								)}
+							</button>
 
 							{/* Favorites */}
 							<button
@@ -199,39 +199,47 @@ function Home() {
 								)}
 							</button>
 
-						{/* User menu */}
-						<div className="flex items-center gap-3 pl-4 border-l border-stone-200">
+							{/* About Socker */}
 							<button
-								onClick={() => navigate('/profile')}
-								className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+								onClick={() => navigate('/about')}
+								className="relative p-2 text-charcoal hover:text-nordic-blue transition-colors"
 							>
-								<div className="w-8 h-8 rounded-full bg-sage/20 flex items-center justify-center overflow-hidden">
-									{user?.photoURL ? (
-										<img
-											src={user.photoURL}
-											alt={user.name}
-											className="w-full h-full object-cover"
-										/>
-									) : (
-										<User className="w-4 h-4 text-sage" />
-									)}
-								</div>
-								<div className="hidden sm:block text-left">
-									<p className="text-sm font-medium text-charcoal">
-										{user?.name}
-									</p>
-									<p className="text-xs text-slate">{user?.email}</p>
-								</div>
+								<Cat className="w-5 h-5" />
 							</button>
-							<Button
-								variant="ghost"
-								size="sm"
-								onClick={handleLogout}
-								className="text-slate hover:text-charcoal"
-							>
-								<LogOut className="w-4 h-4" />
-							</Button>
-						</div>
+
+							{/* User menu */}
+							<div className="flex items-center gap-3 pl-4 border-l border-stone-200">
+								<button
+									onClick={() => navigate('/profile')}
+									className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+								>
+									<div className="w-8 h-8 rounded-full bg-sage/20 flex items-center justify-center overflow-hidden">
+										{user?.photoURL ? (
+											<img
+												src={user.photoURL}
+												alt={user.name}
+												className="w-full h-full object-cover"
+											/>
+										) : (
+											<User className="w-4 h-4 text-sage" />
+										)}
+									</div>
+									<div className="hidden sm:block text-left">
+										<p className="text-sm font-medium text-charcoal">
+											{user?.name}
+										</p>
+										<p className="text-xs text-slate">{user?.email}</p>
+									</div>
+								</button>
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={handleLogout}
+									className="text-slate hover:text-charcoal"
+								>
+									<LogOut className="w-4 h-4" />
+								</Button>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -260,7 +268,9 @@ function Home() {
 								value={searchQuery}
 								onChange={(e) => setSearchQuery(e.target.value)}
 								onFocus={() => setShowSearchSuggestions(true)}
-								onBlur={() => setTimeout(() => setShowSearchSuggestions(false), 200)}
+								onBlur={() =>
+									setTimeout(() => setShowSearchSuggestions(false), 200)
+								}
 								onKeyDown={(e) => {
 									if (e.key === 'Enter') {
 										handleSearch(searchQuery);
@@ -274,7 +284,9 @@ function Home() {
 									{searchHistory.length > 0 && (
 										<div className="px-4 py-2 border-b border-stone-100">
 											<div className="flex items-center justify-between">
-												<span className="text-xs text-slate">Recent Searches</span>
+												<span className="text-xs text-slate">
+													Recent Searches
+												</span>
 												<button
 													onClick={(e) => {
 														e.stopPropagation();
@@ -341,7 +353,9 @@ function Home() {
 										type="number"
 										placeholder="Min"
 										value={priceRange[0]}
-										onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
+										onChange={(e) =>
+											setPriceRange([Number(e.target.value), priceRange[1]])
+										}
 										className="w-24"
 									/>
 									<span className="text-slate">to</span>
@@ -349,7 +363,9 @@ function Home() {
 										type="number"
 										placeholder="Max"
 										value={priceRange[1]}
-										onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
+										onChange={(e) =>
+											setPriceRange([priceRange[0], Number(e.target.value)])
+										}
 										className="w-24"
 									/>
 								</div>
@@ -357,7 +373,9 @@ function Home() {
 
 							{/* Rating */}
 							<div>
-								<h3 className="font-medium text-charcoal mb-3">Minimum Rating</h3>
+								<h3 className="font-medium text-charcoal mb-3">
+									Minimum Rating
+								</h3>
 								<div className="flex gap-2">
 									{[0, 3, 4, 4.5].map((rating) => (
 										<button
@@ -402,7 +420,11 @@ function Home() {
 							</div>
 
 							{/* Clear Filters */}
-							<Button variant="outline" onClick={handleClearFilters} className="w-full">
+							<Button
+								variant="outline"
+								onClick={handleClearFilters}
+								className="w-full"
+							>
 								Clear All Filters
 							</Button>
 						</div>
@@ -410,7 +432,9 @@ function Home() {
 				</div>
 
 				{/* Active Filters */}
-				{(selectedCategories.length > 0 || minRating > 0 || sortBy !== 'default') && (
+				{(selectedCategories.length > 0 ||
+					minRating > 0 ||
+					sortBy !== 'default') && (
 					<div className="flex flex-wrap gap-2 mb-6">
 						{selectedCategories.map((category) => (
 							<span
