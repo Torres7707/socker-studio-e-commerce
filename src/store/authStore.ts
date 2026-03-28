@@ -21,6 +21,7 @@ interface AuthState {
   loginWithGithub: () => Promise<boolean>
   logout: () => Promise<void>
   initializeAuthListener: () => void
+  fetchUser: () => Promise<void>
 }
 
 // Helper function to convert Firebase user to our User type
@@ -182,10 +183,54 @@ export const useAuthStore = create<AuthState>()(
           }
         })
       },
+
+      fetchUser: async () => {
+        try {
+          set({ isLoading: true })
+          const token = localStorage.getItem('auth_token')
+          if (!token) {
+            set({ user: null, isAuthenticated: false, isLoading: false })
+            return
+          }
+
+          const response = await fetch('http://localhost:3001/api/users/profile', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          })
+
+          if (!response.ok) {
+            // Token is invalid, clear it
+            localStorage.removeItem('auth_token')
+            set({ user: null, isAuthenticated: false, isLoading: false })
+            return
+          }
+
+          const user = await response.json()
+          set({ user, isAuthenticated: true, isLoading: false })
+        } catch (error) {
+          console.error('Failed to fetch user:', error)
+          localStorage.removeItem('auth_token')
+          set({ user: null, isAuthenticated: false, isLoading: false })
+        }
+      },
     }),
     {
-      name: 'scandinavian_shop_user',
-      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
+      name: 'scandinavian_shop_auth',
+      partialize: (state) => ({ isAuthenticated: state.isAuthenticated }),
     }
   )
 )
+
+// Initialize auth state from token
+const initializeAuth = async () => {
+  const token = localStorage.getItem('auth_token')
+  if (token) {
+    // Token exists, fetch user data
+    const store = useAuthStore.getState()
+    await store.fetchUser()
+  }
+}
+
+// Call initialization
+initializeAuth()
