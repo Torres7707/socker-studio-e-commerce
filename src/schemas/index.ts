@@ -26,6 +26,7 @@ export const UserSchema = z.object({
 
 // CartItem Schema
 export const CartItemSchema = z.object({
+  id: z.string(),
   product: ProductSchema,
   quantity: z.number().int().positive(),
 })

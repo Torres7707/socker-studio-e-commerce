@@ -7,7 +7,7 @@ import { useCartStore } from '@/store/cartStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { useFilterStore, type FilterState } from '@/store/filterStore';
 import { toast } from 'sonner';
-import { categories, getProducts } from '@/data/products';
+import { productsApi } from '@/lib/api';
 import { type Product } from '@/schemas';
 import {
 	Cat,
@@ -22,6 +22,16 @@ import {
 	Filter,
 	X,
 } from 'lucide-react';
+
+// Categories
+const categories = [
+	'All',
+	'Home Textiles',
+	'Furniture',
+	'Lighting',
+	'Decor',
+	'Storage',
+];
 
 const SORT_OPTIONS = [
 	{ value: 'default', label: 'Default' },
@@ -73,7 +83,7 @@ function Home() {
 		const fetchProducts = async () => {
 			try {
 				setIsLoading(true);
-				const result = await getProducts({
+				const result = await productsApi.getProducts({
 					category:
 						selectedCategories.length > 0 && !selectedCategories.includes('All')
 							? selectedCategories[0]

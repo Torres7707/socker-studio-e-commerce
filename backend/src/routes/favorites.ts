@@ -28,7 +28,7 @@ export default async function favoriteRoutes(fastify: FastifyInstance) {
   })
   
   // Add to favorites
-  fastify.post('/:productId', async (request: FastifyRequest<{ Params: { productId: string } }>, reply: FastifyReply) => {
+  fastify.post('/:productId', async (request: FastifyRequest<{ Params: { productId: string }; Body: {} }>, reply: FastifyReply) => {
     try {
       // Verify JWT token
       await request.jwtVerify()

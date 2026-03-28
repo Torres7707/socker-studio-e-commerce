@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { useAuthStore } from '@/store/authStore'
 import { useCartStore } from '@/store/cartStore'
+import { useFavoritesStore } from '@/store/favoritesStore'
 import { useReviewStore } from '@/store/reviewStore'
-import { products } from '@/data/products'
+import { productsApi } from '@/lib/api'
+import { type Product } from '@/schemas'
 import {
   ShoppingCart,
   Heart,
@@ -26,15 +28,47 @@ function ProductDetail() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const { items: cart, addItem, getItemCount, getTotal } = useCartStore()
+  const { isFavorite, toggleFavorite } = useFavoritesStore()
   const { getProductReviews, addReview, markHelpful, getAverageRating } = useReviewStore()
   const [quantity, setQuantity] = useState(1)
-  const [isFavorite, setIsFavorite] = useState(false)
   const [showReviewForm, setShowReviewForm] = useState(false)
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' })
+  const [product, setProduct] = useState<Product | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const product = products.find((p) => p.id === id)
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (!id) return
+      
+      try {
+        setLoading(true)
+        setError(null)
+        const data = await productsApi.getProduct(id)
+        setProduct(data)
+      } catch (err) {
+        console.error('Failed to fetch product:', err)
+        setError('Failed to load product')
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  if (!product) {
+    fetchProduct()
+  }, [id])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-snow flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-nordic-blue mx-auto mb-4"></div>
+          <p className="text-slate">Loading product...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !product) {
     return (
       <div className="min-h-screen bg-snow flex items-center justify-center">
         <div className="text-center">
@@ -51,8 +85,8 @@ function ProductDetail() {
     }
   }
 
-  const toggleFavorite = () => {
-    setIsFavorite(!isFavorite)
+  const handleToggleFavorite = () => {
+    toggleFavorite(product.id)
   }
 
   const handleSubmitReview = () => {
@@ -239,12 +273,12 @@ function ProductDetail() {
               <Button
                 variant="outline"
                 size="lg"
-                onClick={toggleFavorite}
-                className={isFavorite ? 'text-rose-ash border-rose-ash' : ''}
+                onClick={handleToggleFavorite}
+                className={isFavorite(product.id) ? 'text-rose-ash border-rose-ash' : ''}
               >
                 <Heart
                   className="w-5 h-5"
-                  fill={isFavorite ? 'currentColor' : 'none'}
+                  fill={isFavorite(product.id) ? 'currentColor' : 'none'}
                 />
               </Button>
             </div>
