@@ -18,6 +18,11 @@
 - [x] Toast 通知系统
 - [x] 响应式设计
 - [x] 完整测试覆盖（99个测试用例）
+- [x] 后端 API 开发（Node.js + Fastify）
+- [x] PostgreSQL 数据库与 Prisma ORM
+- [x] 完整的 RESTful API（认证、商品、订单、购物车、用户、收藏）
+- [x] 数据库种子数据（12个商品、2个用户、评价、地址）
+- [x] 前后端集成
 
 ---
 
@@ -144,54 +149,71 @@
 ## 🔧 Phase 4: 全栈转型（3-4周）
 
 ### 后端 API 开发
-- [ ] **项目搭建**
-  - [ ] Node.js + Fastify 项目初始化
-  - [ ] TypeScript 配置
-  - [ ] ESLint + Prettier
+- [x] **项目搭建** ✅
+  - [x] Node.js + Fastify 项目初始化
+  - [x] TypeScript 配置
+  - [x] ESLint + Prettier
 
-- [ ] **用户认证 API**
-  - [ ] POST /api/auth/register
-  - [ ] POST /api/auth/login
-  - [ ] POST /api/auth/logout
-  - [ ] POST /api/auth/refresh-token
-  - [ ] POST /api/auth/forgot-password
+- [x] **用户认证 API** ✅
+  - [x] POST /api/auth/register
+  - [x] POST /api/auth/login
+  - [x] POST /api/auth/logout
+  - [x] POST /api/auth/refresh-token
+  - [x] POST /api/auth/forgot-password
 
-- [ ] **商品 API**
-  - [ ] GET /api/products（列表、筛选、分页）
-  - [ ] GET /api/products/:id（详情）
-  - [ ] GET /api/products/:id/reviews（评价）
-  - [ ] POST /api/products/:id/reviews（添加评价）
+- [x] **商品 API** ✅
+  - [x] GET /api/products（列表、筛选、分页）
+  - [x] GET /api/products/:id（详情）
+  - [x] GET /api/products/:id/reviews（评价）
+  - [x] POST /api/products/:id/reviews（添加评价）
 
-- [ ] **订单 API**
-  - [ ] POST /api/orders（创建订单）
-  - [ ] GET /api/orders/:id（订单详情）
-  - [ ] GET /api/orders（用户订单列表）
-  - [ ] PATCH /api/orders/:id/status（更新状态）
+- [x] **订单 API** ✅
+  - [x] POST /api/orders（创建订单）
+  - [x] GET /api/orders/:id（订单详情）
+  - [x] GET /api/orders（用户订单列表）
+  - [x] PATCH /api/orders/:id/status（更新状态）
 
-- [ ] **用户 API**
-  - [ ] GET /api/users/profile（获取资料）
-  - [ ] PUT /api/users/profile（更新资料）
-  - [ ] GET /api/users/addresses（地址列表）
-  - [ ] POST /api/users/addresses（添加地址）
-  - [ ] DELETE /api/users/addresses/:id（删除地址）
+- [x] **用户 API** ✅
+  - [x] GET /api/users/profile（获取资料）
+  - [x] PUT /api/users/profile（更新资料）
+  - [x] GET /api/users/addresses（地址列表）
+  - [x] POST /api/users/addresses（添加地址）
+  - [x] DELETE /api/users/addresses/:id（删除地址）
+
+- [x] **购物车 API** ✅
+  - [x] GET /api/cart（获取购物车）
+  - [x] POST /api/cart（添加到购物车）
+  - [x] PUT /api/cart/:id（更新数量）
+  - [x] DELETE /api/cart/:id（删除商品）
+  - [x] DELETE /api/cart（清空购物车）
+
+- [x] **收藏 API** ✅
+  - [x] GET /api/favorites（获取收藏）
+  - [x] POST /api/favorites/:productId（添加收藏）
+  - [x] DELETE /api/favorites/:productId（取消收藏）
+  - [x] GET /api/favorites/check/:productId（检查收藏状态）
 
 ### 数据库设计
-- [ ] **PostgreSQL 配置**
-  - [ ] 数据库创建
-  - [ ] Prisma ORM 配置
-  - [ ] 连接池设置
+- [x] **PostgreSQL 配置** ✅
+  - [x] 数据库创建
+  - [x] Prisma ORM 配置
+  - [x] 连接池设置
 
-- [ ] **数据模型**
-  - [ ] User 模型
-  - [ ] Product 模型
-  - [ ] Order 模型
-  - [ ] Review 模型
-  - [ ] Address 模型
+- [x] **数据模型** ✅
+  - [x] User 模型
+  - [x] Product 模型
+  - [x] Order 模型
+  - [x] Review 模型
+  - [x] Address 模型
+  - [x] CartItem 模型
+  - [x] Favorite 模型
+  - [x] ShippingAddress 模型
+  - [x] OrderItem 模型
 
-- [ ] **数据迁移**
-  - [ ] 初始迁移脚本
-  - [ ] 种子数据
-  - [ ] 索引优化
+- [x] **数据迁移** ✅
+  - [x] 初始迁移脚本
+  - [x] 种子数据（12个商品、2个用户、评价、地址、收藏、购物车）
+  - [x] 索引优化
 
 ### 支付集成
 - [ ] **Stripe 集成**
@@ -348,22 +370,22 @@
 ## 📊 优先级排序
 
 ### 🔴 高优先级（立即开始）
-1. 后端 API 开发
-2. 数据库设计
-3. 支付集成
-4. 部署配置
+1. 支付集成（Stripe）
+2. 部署配置（Vercel + Railway）
+3. 邮件服务（SendGrid）
+4. 安全加固
 
 ### 🟡 中优先级（核心功能完成后）
 1. 后台管理系统
-2. 邮件服务
-3. 文件存储
-4. 安全加固
+2. 文件存储（AWS S3）
+3. Redis 缓存
+4. 性能优化
 
 ### 🟢 低优先级（优化阶段）
 1. PWA 支持
 2. 国际化
 3. 高级分析
-4. 性能优化
+4. 商品对比功能
 
 ---
 
@@ -371,7 +393,7 @@
 
 - **Phase 1-2**: 3-5 周（前端增强）
 - **Phase 3**: 1-2 周（国际化）
-- **Phase 4**: 3-4 周（全栈转型）
+- **Phase 4**: 3-4 周（全栈转型）✅ 已完成
 - **Phase 5**: 1-2 周（服务集成）
 - **Phase 6**: 2-3 周（后台管理）
 - **Phase 7**: 1-2 周（部署运维）
@@ -383,10 +405,10 @@
 
 ## 🎯 下一步行动
 
-1. **立即开始**: 搭建后端 API 项目
-2. **本周目标**: 完成用户认证 API
-3. **本月目标**: 完成核心 API + 数据库
+1. **立即优先**: 支付集成（Stripe）
+2. **本周目标**: 完成支付流程和订单状态更新
+3. **本月目标**: 部署到生产环境（Vercel + Railway）
 
 ---
 
-*最后更新: 2026-03-27*
+*最后更新: 2026-03-28*
