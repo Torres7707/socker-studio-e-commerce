@@ -51,38 +51,66 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: true,
 
-      login: async (username: string, _password: string): Promise<boolean> => {
-        // For demo purposes, simulate API call
-        // In production, you would use Firebase signInWithEmailAndPassword
-        await new Promise(resolve => setTimeout(resolve, 1000))
+      login: async (username: string, password: string): Promise<boolean> => {
+        try {
+          set({ isLoading: true })
+          
+          const response = await fetch('http://localhost:3001/api/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username, password }),
+          })
 
-        const mockUser: User = {
-          id: '1',
-          username,
-          email: `${username}@example.com`,
-          name: username.charAt(0).toUpperCase() + username.slice(1),
-          provider: 'credentials',
+          if (!response.ok) {
+            const error = await response.json()
+            throw new Error(error.message || 'Login failed')
+          }
+
+          const { user, token } = await response.json()
+          
+          // Store token in localStorage
+          localStorage.setItem('auth_token', token)
+          
+          set({ user, isAuthenticated: true, isLoading: false })
+          return true
+        } catch (error) {
+          console.error('Login error:', error)
+          set({ isLoading: false })
+          throw error
         }
-
-        set({ user: mockUser, isAuthenticated: true, isLoading: false })
-        return true
       },
 
-      register: async (username: string, email: string, _password: string, name: string): Promise<boolean> => {
-        // For demo purposes, simulate API call
-        // In production, you would use Firebase createUserWithEmailAndPassword
-        await new Promise(resolve => setTimeout(resolve, 1000))
+      register: async (username: string, email: string, password: string, name: string): Promise<boolean> => {
+        try {
+          set({ isLoading: true })
+          
+          const response = await fetch('http://localhost:3001/api/auth/register', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username, email, password, name }),
+          })
 
-        const mockUser: User = {
-          id: Date.now().toString(),
-          username,
-          email,
-          name,
-          provider: 'credentials',
+          if (!response.ok) {
+            const error = await response.json()
+            throw new Error(error.message || 'Registration failed')
+          }
+
+          const { user, token } = await response.json()
+          
+          // Store token in localStorage
+          localStorage.setItem('auth_token', token)
+          
+          set({ user, isAuthenticated: true, isLoading: false })
+          return true
+        } catch (error) {
+          console.error('Registration error:', error)
+          set({ isLoading: false })
+          throw error
         }
-
-        set({ user: mockUser, isAuthenticated: true, isLoading: false })
-        return true
       },
 
       loginWithGoogle: async (): Promise<boolean> => {

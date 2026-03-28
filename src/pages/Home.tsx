@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,7 @@ import { useCartStore } from '@/store/cartStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { useFilterStore, type FilterState } from '@/store/filterStore';
 import { toast } from 'sonner';
-import { products, categories } from '@/data/products';
+import { categories, getProducts } from '@/data/products';
 import { type Product } from '@/schemas';
 import {
 	Cat,
@@ -64,7 +64,37 @@ function Home() {
 	const [searchQuery, setSearchQuery] = useState('');
 	const [showFilters, setShowFilters] = useState(false);
 	const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
+	const [products, setProducts] = useState<Product[]>([]);
+	const [isLoading, setIsLoading] = useState(true);
 	const searchRef = useRef<HTMLInputElement>(null);
+
+	// Fetch products from API
+	useEffect(() => {
+		const fetchProducts = async () => {
+			try {
+				setIsLoading(true);
+				const result = await getProducts({
+					category:
+						selectedCategories.length > 0 && !selectedCategories.includes('All')
+							? selectedCategories[0]
+							: undefined,
+					search: searchQuery || undefined,
+					minPrice: priceRange[0] > 0 ? priceRange[0] : undefined,
+					maxPrice: priceRange[1] < 500 ? priceRange[1] : undefined,
+					minRating: minRating > 0 ? minRating : undefined,
+					sortBy: sortBy !== 'default' ? sortBy : undefined,
+				});
+				setProducts(result.products || []);
+			} catch (error) {
+				console.error('Failed to fetch products:', error);
+				toast.error('Failed to load products');
+			} finally {
+				setIsLoading(false);
+			}
+		};
+
+		fetchProducts();
+	}, [selectedCategories, searchQuery, priceRange, minRating, sortBy]);
 
 	const filteredProducts = products
 		.filter((product) => {
@@ -462,124 +492,134 @@ function Home() {
 					</div>
 				)}
 
+				{/* Loading state */}
+				{isLoading && (
+					<div className="flex items-center justify-center py-12">
+						<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-nordic-blue"></div>
+						<span className="ml-2 text-slate">Loading products...</span>
+					</div>
+				)}
+
 				{/* Products grid */}
-				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-					{filteredProducts.map((product) => (
-						<div
-							key={product.id}
-							onClick={() => navigate(`/product/${product.id}`)}
-							className="group bg-white rounded-2xl border border-stone-100 overflow-hidden hover:shadow-lg hover:shadow-stone/5 transition-all duration-300 cursor-pointer"
-						>
-							{/* Image */}
-							<div className="relative aspect-square overflow-hidden bg-frost">
-								<img
-									src={product.image}
-									alt={product.name}
-									className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-								/>
-								{/* Favorite button */}
-								<button
-									onClick={(e) => handleToggleFavorite(product.id, e)}
-									className={`absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm transition-all ${
-										favorites.includes(product.id)
-											? 'text-rose-ash'
-											: 'text-slate hover:text-rose-ash'
-									}`}
-								>
-									<Heart
-										className="w-4 h-4"
-										fill={
-											favorites.includes(product.id) ? 'currentColor' : 'none'
-										}
+				{!isLoading && (
+					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+						{filteredProducts.map((product) => (
+							<div
+								key={product.id}
+								onClick={() => navigate(`/product/${product.id}`)}
+								className="group bg-white rounded-2xl border border-stone-100 overflow-hidden hover:shadow-lg hover:shadow-stone/5 transition-all duration-300 cursor-pointer"
+							>
+								{/* Image */}
+								<div className="relative aspect-square overflow-hidden bg-frost">
+									<img
+										src={product.image}
+										alt={product.name}
+										className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
 									/>
-								</button>
-								{/* Sale badge */}
-								{product.originalPrice && (
-									<span className="absolute top-3 left-3 px-2 py-1 bg-sage text-white text-xs font-medium rounded-md">
-										Sale
-									</span>
-								)}
-								{!product.inStock && (
-									<div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-										<span className="text-charcoal font-medium">
-											Out of Stock
+									{/* Favorite button */}
+									<button
+										onClick={(e) => handleToggleFavorite(product.id, e)}
+										className={`absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm transition-all ${
+											favorites.includes(product.id)
+												? 'text-rose-ash'
+												: 'text-slate hover:text-rose-ash'
+										}`}
+									>
+										<Heart
+											className="w-4 h-4"
+											fill={
+												favorites.includes(product.id) ? 'currentColor' : 'none'
+											}
+										/>
+									</button>
+									{/* Sale badge */}
+									{product.originalPrice && (
+										<span className="absolute top-3 left-3 px-2 py-1 bg-sage text-white text-xs font-medium rounded-md">
+											Sale
 										</span>
-									</div>
-								)}
-							</div>
-
-							{/* Content */}
-							<div className="p-4">
-								<p className="text-xs text-slate uppercase tracking-wider mb-1">
-									{product.category}
-								</p>
-								<h3 className="font-medium text-charcoal mb-1">
-									{product.name}
-								</h3>
-								<p className="text-sm text-slate line-clamp-2 mb-3">
-									{product.description}
-								</p>
-
-								{/* Rating */}
-								<div className="flex items-center gap-1 mb-3">
-									<Star className="w-4 h-4 text-cedar fill-cedar" />
-									<span className="text-sm font-medium text-charcoal">
-										{product.rating}
-									</span>
-									<span className="text-sm text-slate">
-										({product.reviews})
-									</span>
-								</div>
-
-								{/* Price and add to cart */}
-								<div className="flex items-center justify-between">
-									<div>
-										<span className="text-lg font-semibold text-charcoal">
-											${product.price}
-										</span>
-										{product.originalPrice && (
-											<span className="text-sm text-slate line-through ml-2">
-												${product.originalPrice}
+									)}
+									{!product.inStock && (
+										<div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+											<span className="text-charcoal font-medium">
+												Out of Stock
 											</span>
-										)}
-									</div>
-
-									{cart.find((item) => item.product.id === product.id) ? (
-										<div className="flex items-center gap-2">
-											<button
-												onClick={(e) => removeFromCart(product.id, e)}
-												className="w-8 h-8 rounded-lg bg-frost flex items-center justify-center text-charcoal hover:bg-mist transition-colors"
-											>
-												<Minus className="w-4 h-4" />
-											</button>
-											<span className="w-6 text-center font-medium">
-												{
-													cart.find((item) => item.product.id === product.id)
-														?.quantity
-												}
-											</span>
-											<button
-												onClick={(e) => handleAddToCart(product, e)}
-												disabled={!product.inStock}
-												className="w-8 h-8 rounded-lg bg-nordic-blue flex items-center justify-center text-white hover:bg-nordic-blue-light transition-colors disabled:opacity-50"
-											>
-												<Plus className="w-4 h-4" />
-											</button>
 										</div>
-									) : (
-										<Button
-											size="sm"
-											onClick={(e) => handleAddToCart(product, e)}
-											disabled={!product.inStock}
-										>
-											<Plus className="w-4 h-4" />
-										</Button>
 									)}
 								</div>
+
+								{/* Content */}
+								<div className="p-4">
+									<p className="text-xs text-slate uppercase tracking-wider mb-1">
+										{product.category}
+									</p>
+									<h3 className="font-medium text-charcoal mb-1">
+										{product.name}
+									</h3>
+									<p className="text-sm text-slate line-clamp-2 mb-3">
+										{product.description}
+									</p>
+
+									{/* Rating */}
+									<div className="flex items-center gap-1 mb-3">
+										<Star className="w-4 h-4 text-cedar fill-cedar" />
+										<span className="text-sm font-medium text-charcoal">
+											{product.rating}
+										</span>
+										<span className="text-sm text-slate">
+											({product.reviews})
+										</span>
+									</div>
+
+									{/* Price and add to cart */}
+									<div className="flex items-center justify-between">
+										<div>
+											<span className="text-lg font-semibold text-charcoal">
+												${product.price}
+											</span>
+											{product.originalPrice && (
+												<span className="text-sm text-slate line-through ml-2">
+													${product.originalPrice}
+												</span>
+											)}
+										</div>
+
+										{cart.find((item) => item.product.id === product.id) ? (
+											<div className="flex items-center gap-2">
+												<button
+													onClick={(e) => removeFromCart(product.id, e)}
+													className="w-8 h-8 rounded-lg bg-frost flex items-center justify-center text-charcoal hover:bg-mist transition-colors"
+												>
+													<Minus className="w-4 h-4" />
+												</button>
+												<span className="w-6 text-center font-medium">
+													{
+														cart.find((item) => item.product.id === product.id)
+															?.quantity
+													}
+												</span>
+												<button
+													onClick={(e) => handleAddToCart(product, e)}
+													disabled={!product.inStock}
+													className="w-8 h-8 rounded-lg bg-nordic-blue flex items-center justify-center text-white hover:bg-nordic-blue-light transition-colors disabled:opacity-50"
+												>
+													<Plus className="w-4 h-4" />
+												</button>
+											</div>
+										) : (
+											<Button
+												size="sm"
+												onClick={(e) => handleAddToCart(product, e)}
+												disabled={!product.inStock}
+											>
+												<Plus className="w-4 h-4" />
+											</Button>
+										)}
+									</div>
+								</div>
 							</div>
-						</div>
-					))}
-				</div>
+						))}
+					</div>
+				)}
 
 				{/* Empty state */}
 				{filteredProducts.length === 0 && (
@@ -619,7 +659,6 @@ function Home() {
 					</Button>
 				</div>
 			)}
-
 		</div>
 	);
 }

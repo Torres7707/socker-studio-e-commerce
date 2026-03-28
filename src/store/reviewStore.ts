@@ -1,88 +1,85 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { type Review } from '@/schemas'
+import { productsApi } from '@/lib/api'
 
 interface ReviewState {
   reviews: Review[]
-  addReview: (review: Omit<Review, 'id' | 'date' | 'helpful'>) => void
-  getProductReviews: (productId: string) => Review[]
-  markHelpful: (reviewId: string) => void
+  isLoading: boolean
+  addReview: (productId: string, data: { rating: number; comment: string }) => Promise<void>
+  getProductReviews: (productId: string) => Promise<Review[]>
+  markHelpful: (productId: string, reviewId: string) => Promise<void>
   getAverageRating: (productId: string) => number
 }
 
 export const useReviewStore = create<ReviewState>()(
   persist(
     (set, get) => ({
-      reviews: [
-        {
-          id: '1',
-          productId: '1',
-          userId: '1',
-          userName: 'Sarah M.',
-          rating: 5,
-          comment: 'Absolutely love this wool throw! The quality is exceptional and it adds such a cozy touch to my living room.',
-          date: '2026-03-20',
-          helpful: 12,
-        },
-        {
-          id: '2',
-          productId: '1',
-          userId: '2',
-          userName: 'Michael K.',
-          rating: 4,
-          comment: 'Great quality and beautiful design. Shipping was fast too!',
-          date: '2026-03-18',
-          helpful: 8,
-        },
-        {
-          id: '3',
-          productId: '2',
-          userId: '3',
-          userName: 'Emma L.',
-          rating: 5,
-          comment: 'Perfect minimalist vase. Looks exactly like the photos.',
-          date: '2026-03-15',
-          helpful: 5,
-        },
-        {
-          id: '4',
-          productId: '3',
-          userId: '4',
-          userName: 'David R.',
-          rating: 4,
-          comment: 'Solid oak chair, very comfortable. Assembly was straightforward.',
-          date: '2026-03-10',
-          helpful: 15,
-        },
-      ],
+      reviews: [],
+      isLoading: false,
 
-      addReview: (review) => {
-        const newReview: Review = {
-          ...review,
-          id: Date.now().toString(),
-          date: new Date().toISOString().split('T')[0],
-          helpful: 0,
+      addReview: async (productId: string, data: { rating: number; comment: string }) => {
+        try {
+          set({ isLoading: true })
+          await productsApi.addReview(productId, data)
+          
+          // Refresh reviews for this product
+          const reviews = await productsApi.getProductReviews(productId)
+          set((state) => ({
+            reviews: [
+              ...reviews,
+              ...state.reviews.filter(r => r.productId !== productId)
+            ],
+            isLoading: false
+          }))
+        } catch (error) {
+          console.error('Failed to add review:', error)
+          set({ isLoading: false })
+          throw error
         }
-        set((state) => ({
-          reviews: [newReview, ...state.reviews],
-        }))
       },
 
-      getProductReviews: (productId) => {
-        return get().reviews.filter((review) => review.productId === productId)
+      getProductReviews: async (productId: string) => {
+        try {
+          set({ isLoading: true })
+          const reviews = await productsApi.getProductReviews(productId)
+          
+          // Update state with fetched reviews
+          set((state) => ({
+            reviews: [
+              ...reviews,
+              ...state.reviews.filter(r => r.productId !== productId)
+            ],
+            isLoading: false
+          }))
+          
+          return reviews
+        } catch (error) {
+          console.error('Failed to fetch reviews:', error)
+          set({ isLoading: false })
+          return []
+        }
       },
 
-      markHelpful: (reviewId) => {
-        set((state) => ({
-          reviews: state.reviews.map((review) =>
-            review.id === reviewId
-              ? { ...review, helpful: review.helpful + 1 }
-              : review
-          ),
-        }))
+      markHelpful: async (productId: string, reviewId: string) => {
+        try {
+          await productsApi.markReviewHelpful(productId, reviewId)
+          
+          // Update local state
+          set((state) => ({
+            reviews: state.reviews.map((review) =>
+              review.id === reviewId
+                ? { ...review, helpful: review.helpful + 1 }
+                : review
+            ),
+          }))
+        } catch (error) {
+          console.error('Failed to mark review as helpful:', error)
+          throw error
+        }
       },
 
-      getAverageRating: (productId) => {
+      getAverageRating: (productId: string) => {
         const productReviews = get().reviews.filter(
           (review) => review.productId === productId
         )

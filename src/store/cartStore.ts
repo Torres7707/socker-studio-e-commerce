@@ -1,62 +1,104 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { type Product, type CartItem } from '@/schemas'
+import { cartApi } from '@/lib/api'
 
 interface CartState {
   items: CartItem[]
-  addItem: (product: Product) => void
-  removeItem: (productId: string) => void
-  updateQuantity: (productId: string, quantity: number) => void
-  clearCart: () => void
+  isLoading: boolean
+  addItem: (product: Product) => Promise<void>
+  removeItem: (productId: string) => Promise<void>
+  updateQuantity: (productId: string, quantity: number) => Promise<void>
+  clearCart: () => Promise<void>
   getItemCount: () => number
   getTotal: () => number
+  fetchCart: () => Promise<void>
 }
 
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
+      isLoading: false,
 
-      addItem: (product: Product) => {
-        set((state) => {
-          const existingItem = state.items.find(
-            (item) => item.product.id === product.id
-          )
-          if (existingItem) {
-            return {
-              items: state.items.map((item) =>
-                item.product.id === product.id
-                  ? { ...item, quantity: item.quantity + 1 }
-                  : item
-              ),
-            }
-          }
-          return {
-            items: [...state.items, { product, quantity: 1 }],
-          }
-        })
+      fetchCart: async () => {
+        try {
+          set({ isLoading: true })
+          const cartItems = await cartApi.getCart()
+          set({ items: cartItems, isLoading: false })
+        } catch (error) {
+          console.error('Failed to fetch cart:', error)
+          set({ isLoading: false })
+        }
       },
 
-      removeItem: (productId: string) => {
-        set((state) => ({
-          items: state.items.filter((item) => item.product.id !== productId),
-        }))
+      addItem: async (product: Product) => {
+        try {
+          set({ isLoading: true })
+          await cartApi.addToCart(product.id, 1)
+          
+          // Refresh cart from server
+          await get().fetchCart()
+        } catch (error) {
+          console.error('Failed to add item to cart:', error)
+          set({ isLoading: false })
+          throw error
+        }
       },
 
-      updateQuantity: (productId: string, quantity: number) => {
+      removeItem: async (productId: string) => {
+        try {
+          set({ isLoading: true })
+          
+          // Find the cart item to get its ID
+          const cartItem = get().items.find(item => item.product.id === productId)
+          if (cartItem) {
+            await cartApi.removeFromCart(cartItem.id)
+          }
+          
+          // Refresh cart from server
+          await get().fetchCart()
+        } catch (error) {
+          console.error('Failed to remove item from cart:', error)
+          set({ isLoading: false })
+          throw error
+        }
+      },
+
+      updateQuantity: async (productId: string, quantity: number) => {
         if (quantity < 1) {
-          get().removeItem(productId)
+          await get().removeItem(productId)
           return
         }
-        set((state) => ({
-          items: state.items.map((item) =>
-            item.product.id === productId ? { ...item, quantity } : item
-          ),
-        }))
+        
+        try {
+          set({ isLoading: true })
+          
+          // Find the cart item to get its ID
+          const cartItem = get().items.find(item => item.product.id === productId)
+          if (cartItem) {
+            await cartApi.updateCartItem(cartItem.id, quantity)
+          }
+          
+          // Refresh cart from server
+          await get().fetchCart()
+        } catch (error) {
+          console.error('Failed to update cart item:', error)
+          set({ isLoading: false })
+          throw error
+        }
       },
 
-      clearCart: () => {
-        set({ items: [] })
+      clearCart: async () => {
+        try {
+          set({ isLoading: true })
+          await cartApi.clearCart()
+          set({ items: [], isLoading: false })
+        } catch (error) {
+          console.error('Failed to clear cart:', error)
+          set({ isLoading: false })
+          throw error
+        }
       },
 
       getItemCount: () => {
