@@ -1,6 +1,6 @@
 # Socker Studio - Nordic Style E-commerce
 
-A modern full-stack e-commerce application with Nordic minimalist design, built with React + TypeScript + Vite.
+A modern full-stack e-commerce application with Nordic minimalist design, built with React + TypeScript + Vite + Node.js + Fastify.
 
 > 📖 Other Languages: [中文](./README_CN.md)
 
@@ -8,10 +8,11 @@ A modern full-stack e-commerce application with Nordic minimalist design, built 
 
 - 🎨 **Nordic Minimalist Design** - Clean and elegant user interface
 - ⚡ **Ultimate Performance** - Vite build with instant hot updates
-- 🔐 **Complete Authentication** - Firebase multiple login methods
+- 🔐 **Complete Authentication** - Firebase + JWT dual authentication system
 - 🛒 **Shopping Experience** - Complete flow from browsing to checkout
 - 📱 **Responsive Design** - Perfect adaptation for mobile and desktop
 - ✅ **Test Coverage** - 99 test cases with 100% pass rate
+- 🗄️ **Full-Stack Architecture** - Frontend + Backend + Database complete solution
 
 ## 🚀 Core Features
 
@@ -48,8 +49,16 @@ A modern full-stack e-commerce application with Nordic minimalist design, built 
 - **Styling**: Tailwind CSS 4
 - **State**: Zustand
 - **Routing**: React Router 7
-- **Auth**: Firebase Auth
+- **Auth**: Firebase Auth + JWT
 - **Icons**: Lucide React
+
+### Backend
+- **Runtime**: Node.js + Fastify
+- **Language**: TypeScript
+- **Database**: PostgreSQL + Prisma ORM
+- **Authentication**: JWT + bcrypt
+- **Validation**: Zod
+- **API**: RESTful API
 
 ### Testing
 - **Framework**: Vitest
@@ -64,60 +73,103 @@ A modern full-stack e-commerce application with Nordic minimalist design, built 
 ## 📁 Project Structure
 
 ```
-src/
-├── components/          # Reusable components
-│   ├── ui/             # UI base components
-│   │   ├── button.tsx
-│   │   ├── input.tsx
-│   │   ├── card.tsx
-│   │   └── toast.tsx
-│   └── Login.tsx       # Login component
-├── pages/              # Page components
-│   ├── Home.tsx        # Home page
-│   ├── ProductDetail.tsx # Product detail
-│   ├── Cart.tsx        # Shopping cart
-│   ├── Checkout.tsx    # Checkout
-│   ├── Profile.tsx     # User profile
-│   ├── Favorites.tsx   # Favorites
-│   └── OrderTracking.tsx # Order tracking
-├── store/              # State management
-│   ├── authStore.ts    # Auth state
-│   ├── cartStore.ts    # Cart state
-│   ├── favoritesStore.ts # Favorites state
-│   ├── filterStore.ts  # Filter state
-│   └── reviewStore.ts  # Review state
-├── lib/                # Utilities
-│   ├── firebase.ts     # Firebase config
-│   └── utils.ts        # Utility functions
-├── data/               # Data
-│   └── products.ts     # Product data
-└── test/               # Test config
-    └── setup.ts
+├── src/                    # Frontend source code
+│   ├── components/         # Reusable components
+│   │   ├── ui/            # UI base components
+│   │   │   ├── button.tsx
+│   │   │   ├── input.tsx
+│   │   │   ├── card.tsx
+│   │   │   └── toast.tsx
+│   │   └── Login.tsx      # Login component
+│   ├── pages/             # Page components
+│   │   ├── Home.tsx       # Home page
+│   │   ├── ProductDetail.tsx # Product detail
+│   │   ├── Cart.tsx       # Shopping cart
+│   │   ├── Checkout.tsx   # Checkout
+│   │   ├── Profile.tsx    # User profile
+│   │   ├── Favorites.tsx  # Favorites
+│   │   └── OrderTracking.tsx # Order tracking
+│   ├── store/             # State management
+│   │   ├── authStore.ts   # Auth state
+│   │   ├── cartStore.ts   # Cart state
+│   │   ├── favoritesStore.ts # Favorites state
+│   │   ├── filterStore.ts # Filter state
+│   │   └── reviewStore.ts # Review state
+│   ├── lib/               # Utilities
+│   │   ├── firebase.ts    # Firebase config
+│   │   ├── api.ts         # API client
+│   │   └── utils.ts       # Utility functions
+│   ├── data/              # Data
+│   │   └── products.ts    # Product data
+│   └── test/              # Test config
+│       └── setup.ts
+├── backend/               # Backend source code
+│   ├── src/
+│   │   ├── routes/        # API routes
+│   │   │   ├── auth.ts    # Authentication
+│   │   │   ├── products.ts # Products
+│   │   │   ├── orders.ts  # Orders
+│   │   │   ├── users.ts   # Users
+│   │   │   ├── cart.ts    # Shopping cart
+│   │   │   └── favorites.ts # Favorites
+│   │   ├── utils/         # Utilities
+│   │   │   └── prisma.ts  # Prisma client
+│   │   ├── schemas/       # Validation schemas
+│   │   ├── seed.ts        # Database seed
+│   │   └── index.ts       # Entry point
+│   └── prisma/
+│       └── schema.prisma  # Database schema
 ```
 
 ## 🚦 Quick Start
 
 ### Requirements
 - Node.js 18+
+- PostgreSQL 16+
 - pnpm (recommended)
 
 ### Install Dependencies
 ```bash
+# Install frontend dependencies
 pnpm install
+
+# Install backend dependencies
+cd backend && pnpm install
 ```
 
 ### Configure Environment Variables
 ```bash
+# Frontend
 cp .env.example .env
 # Edit .env file with your Firebase configuration
+
+# Backend
+cd backend && cp .env.example .env
+# Edit .env file with your database configuration
+```
+
+### Database Setup
+```bash
+cd backend
+
+# Run database migrations
+npx prisma migrate dev
+
+# Seed database with sample data
+pnpm prisma:seed
 ```
 
 ### Start Development Server
 ```bash
+# Start backend (in backend directory)
+pnpm dev
+
+# Start frontend (in root directory)
 pnpm dev
 ```
 
-Visit http://localhost:5173
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:3001
 
 ### Build for Production
 ```bash
@@ -166,8 +218,8 @@ Tests  99 passed (99)
 - [ ] Coupon system
 
 ### Full-Stack Transformation
-- [ ] Backend API development (Node.js + Fastify)
-- [ ] Database design (PostgreSQL + Prisma)
+- [x] Backend API development (Node.js + Fastify) ✅
+- [x] Database design (PostgreSQL + Prisma) ✅
 - [ ] Payment integration (Stripe)
 - [ ] Email service (SendGrid)
 - [ ] File storage (AWS S3/Cloudinary)
@@ -182,6 +234,14 @@ Tests  99 passed (99)
 - [ ] Review image upload
 
 ## 📝 Development Log
+
+### 2026-03-28
+- ✅ Completed Phase 4 backend API development
+- ✅ Set up Node.js + Fastify backend architecture
+- ✅ Implemented PostgreSQL database with Prisma ORM
+- ✅ Created complete RESTful API (auth, products, orders, cart, favorites)
+- ✅ Added database seed data (12 products, 2 users, reviews)
+- ✅ Integrated frontend with backend API
 
 ### 2026-03-27
 - ✅ Completed core e-commerce functionality
