@@ -10,8 +10,12 @@ const fetchWithAuth = async (url: string, options: RequestInit = {}): Promise<Re
   const token = getAuthToken()
   
   const headers: HeadersInit = {
-    'Content-Type': 'application/json',
     ...options.headers,
+  }
+  
+  // Only set Content-Type to application/json if there's a body
+  if (options.body) {
+    (headers as Record<string, string>)['Content-Type'] = 'application/json'
   }
   
   if (token) {
