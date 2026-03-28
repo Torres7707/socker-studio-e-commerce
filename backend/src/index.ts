@@ -10,7 +10,8 @@ const fastify = Fastify({
 // Register plugins
 fastify.register(cors, {
   origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
 })
 
 fastify.register(jwt, {
