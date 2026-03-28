@@ -1,8 +1,10 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/authStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
-import { products } from '@/data/products';
+import { favoritesApi } from '@/lib/api';
+import { type Product } from '@/schemas';
 import {
 	ShoppingCart,
 	Heart,
@@ -17,11 +19,27 @@ import {
 function Favorites() {
 	const { user, logout } = useAuthStore();
 	const navigate = useNavigate();
-	const { favorites, removeFavorite, getCount } = useFavoritesStore();
+	const { favorites, removeFavorite, getCount, fetchFavorites } = useFavoritesStore();
+	const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
+	const [isLoading, setIsLoading] = useState(true);
 
-	const favoriteProducts = products.filter((product) =>
-		favorites.includes(product.id)
-	);
+	// Fetch favorites from API on mount
+	useEffect(() => {
+		const loadFavorites = async () => {
+			try {
+				setIsLoading(true);
+				await fetchFavorites();
+				const products = await favoritesApi.getFavorites();
+				setFavoriteProducts(products);
+			} catch (error) {
+				console.error('Failed to fetch favorites:', error);
+			} finally {
+				setIsLoading(false);
+			}
+		};
+
+		loadFavorites();
+	}, []);
 
 	const favoritesCount = getCount();
 
@@ -129,18 +147,23 @@ function Favorites() {
 					</button>
 				</div>
 
-				{favoriteProducts.length === 0 ? (
-					<div className="text-center py-16">
-						<Heart className="w-16 h-16 text-stone-300 mx-auto mb-4" />
-						<h2 className="text-xl font-medium text-charcoal mb-2">
-							No favorites yet
-						</h2>
-						<p className="text-slate mb-6">
-							Start adding products to your favorites list.
-						</p>
-						<Button onClick={() => navigate('/')}>Start Shopping</Button>
-					</div>
-				) : (
+			{isLoading ? (
+				<div className="flex items-center justify-center py-16">
+					<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-nordic-blue"></div>
+					<span className="ml-2 text-slate">Loading favorites...</span>
+				</div>
+			) : favoriteProducts.length === 0 ? (
+				<div className="text-center py-16">
+					<Heart className="w-16 h-16 text-stone-300 mx-auto mb-4" />
+					<h2 className="text-xl font-medium text-charcoal mb-2">
+						No favorites yet
+					</h2>
+					<p className="text-slate mb-6">
+						Start adding products to your favorites list.
+					</p>
+					<Button onClick={() => navigate('/')}>Start Shopping</Button>
+				</div>
+			) : (
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
 						{favoriteProducts.map((product) => (
 							<div
@@ -157,16 +180,19 @@ function Favorites() {
 										alt={product.name}
 										className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
 									/>
-									{/* Remove from favorites button */}
-									<button
-										onClick={(e) => {
-											e.stopPropagation();
-											removeFavorite(product.id);
-										}}
-										className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm text-rose-ash hover:bg-white transition-all"
-									>
-										<Trash2 className="w-4 h-4" />
-									</button>
+								{/* Remove from favorites button */}
+								<button
+									onClick={async (e) => {
+										e.stopPropagation();
+										await removeFavorite(product.id);
+										// Refresh favorites list
+										const products = await favoritesApi.getFavorites();
+										setFavoriteProducts(products);
+									}}
+									className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm text-rose-ash hover:bg-white transition-all"
+								>
+									<Trash2 className="w-4 h-4" />
+								</button>
 									{/* Sale badge */}
 									{product.originalPrice && (
 										<span className="absolute top-3 left-3 px-2 py-1 bg-sage text-white text-xs font-medium rounded-md">
