@@ -55,6 +55,7 @@ function Home() {
 		favorites,
 		toggleFavorite,
 		getCount: getFavoritesCount,
+		fetchFavorites,
 	} = useFavoritesStore();
 	const {
 		priceRange,
@@ -95,6 +96,7 @@ function Home() {
 					sortBy: sortBy !== 'default' ? sortBy : undefined,
 				});
 				setProducts(result.products || []);
+				fetchFavorites();
 			} catch (error) {
 				console.error('Failed to fetch products:', error);
 				toast.error('Failed to load products');

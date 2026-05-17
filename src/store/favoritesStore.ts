@@ -11,56 +11,59 @@ interface FavoritesActions {
 	fetchFavorites: () => Promise<void>;
 }
 
-export const useFavoritesStore = create<FavoritesState & FavoritesActions>()((set, get) => ({
-	favorites: [],
+export const useFavoritesStore = create<FavoritesState & FavoritesActions>()(
+	(set, get) => ({
+		favorites: [],
 
-	fetchFavorites: async () => {
-		try {
-			const products = await favoritesApi.getFavorites();
-			set({ favorites: products.map((p: { id: string }) => p.id) });
-		} catch (error) {
-			console.error('Failed to fetch favorites:', error);
-		}
-	},
+		fetchFavorites: async () => {
+			try {
+				const products = await favoritesApi.getFavorites();
+				set({ favorites: products.map((p: { id: string }) => p.id) });
+			} catch (error) {
+				console.error('Failed to fetch favorites:', error);
+			}
+		},
 
-	addFavorite: async (productId) => {
-		try {
-			await favoritesApi.addToFavorites(productId);
-			set((state) => ({
-				favorites: [...state.favorites, productId],
-			}));
-		} catch (error) {
-			console.error('Failed to add favorite:', error);
-			throw error;
-		}
-	},
+		addFavorite: async (productId) => {
+			try {
+				await favoritesApi.addToFavorites(productId);
+				set((state) => ({
+					favorites: [...state.favorites, productId],
+				}));
+			} catch (error) {
+				console.error('Failed to add favorite:', error);
+				throw error;
+			}
+		},
 
-	removeFavorite: async (productId) => {
-		try {
-			await favoritesApi.removeFromFavorites(productId);
-			set((state) => ({
-				favorites: state.favorites.filter((id) => id !== productId),
-			}));
-		} catch (error) {
-			console.error('Failed to remove favorite:', error);
-			throw error;
-		}
-	},
+		removeFavorite: async (productId) => {
+			try {
+				await favoritesApi.removeFromFavorites(productId);
+				set((state) => ({
+					favorites: state.favorites.filter((id) => id !== productId),
+				}));
+			} catch (error) {
+				console.error('Failed to remove favorite:', error);
+				throw error;
+			}
+		},
 
-	toggleFavorite: async (productId) => {
-		const { favorites, addFavorite, removeFavorite } = get();
-		if (favorites.includes(productId)) {
-			await removeFavorite(productId);
-		} else {
-			await addFavorite(productId);
-		}
-	},
+		toggleFavorite: async (productId) => {
+			const { favorites, addFavorite, removeFavorite, fetchFavorites } = get();
+			if (favorites.includes(productId)) {
+				await removeFavorite(productId);
+			} else {
+				await addFavorite(productId);
+			}
+			await fetchFavorites();
+		},
 
-	isFavorite: (productId) => {
-		return get().favorites.includes(productId);
-	},
+		isFavorite: (productId) => {
+			return get().favorites.includes(productId);
+		},
 
-	getCount: () => {
-		return get().favorites.length;
-	},
-}))
+		getCount: () => {
+			return get().favorites.length;
+		},
+	})
+);
