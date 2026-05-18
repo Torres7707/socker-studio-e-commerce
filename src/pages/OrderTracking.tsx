@@ -1,44 +1,31 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { useAuthStore } from '@/store/authStore'
+import { ordersApi } from '@/lib/api'
+import { toast } from 'sonner'
+import Layout from '@/components/Layout'
 import {
-  ShoppingCart,
-  Heart,
-  User,
-  LogOut,
   ChevronRight,
   Package,
-  Truck,
   CheckCircle,
   Clock,
-  MapPin,
+  X,
   Phone,
-  Copy,
 } from 'lucide-react'
 
-interface TrackingEvent {
-  date: string
-  time: string
-  status: string
-  location: string
-  description: string
+interface OrderItem {
+  id: string
+  name: string
+  image: string
+  quantity: number
+  price: number
 }
 
 interface OrderDetails {
   id: string
   date: string
-  status: 'processing' | 'shipped' | 'out-for-delivery' | 'delivered'
-  estimatedDelivery: string
-  trackingNumber: string
-  carrier: string
-  items: {
-    id: string
-    name: string
-    image: string
-    quantity: number
-    price: number
-  }[]
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
+  items: OrderItem[]
   shippingAddress: {
     name: string
     address: string
@@ -47,103 +34,74 @@ interface OrderDetails {
     zipCode: string
     phone: string
   }
-  trackingEvents: TrackingEvent[]
+  total: number
+  shipping: number
+  tax: number
 }
 
 function OrderTracking() {
   const { orderId } = useParams<{ orderId: string }>()
   const navigate = useNavigate()
-  const { user, logout } = useAuthStore()
-  const [copied, setCopied] = useState(false)
+  const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Mock order data
-  const orderDetails: OrderDetails = {
-    id: orderId || 'SS12345678',
-    date: '2026-03-25',
-    status: 'out-for-delivery',
-    estimatedDelivery: '2026-03-27',
-    trackingNumber: '1Z999AA10123456784',
-    carrier: 'UPS',
-    items: [
-      {
-        id: '1',
-        name: 'Nordic Wool Throw',
-        image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop',
-        quantity: 2,
-        price: 189,
-      },
-      {
-        id: '3',
-        name: 'Oak Dining Chair',
-        image: 'https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400&h=400&fit=crop',
-        quantity: 1,
-        price: 299,
-      },
-    ],
-    shippingAddress: {
-      name: user?.name || 'John Doe',
-      address: '123 Nordic Street',
-      city: 'San Francisco',
-      state: 'CA',
-      zipCode: '94102',
-      phone: '+1 (555) 123-4567',
-    },
-    trackingEvents: [
-      {
-        date: '2026-03-27',
-        time: '08:30 AM',
-        status: 'Out for Delivery',
-        location: 'San Francisco, CA',
-        description: 'Package is out for delivery',
-      },
-      {
-        date: '2026-03-27',
-        time: '06:15 AM',
-        status: 'Arrived at Local Facility',
-        location: 'San Francisco, CA',
-        description: 'Package arrived at local delivery facility',
-      },
-      {
-        date: '2026-03-26',
-        time: '11:45 PM',
-        status: 'In Transit',
-        location: 'Oakland, CA',
-        description: 'Package in transit to destination',
-      },
-      {
-        date: '2026-03-26',
-        time: '02:30 PM',
-        status: 'Departed Facility',
-        location: 'Los Angeles, CA',
-        description: 'Package departed from sorting facility',
-      },
-      {
-        date: '2026-03-25',
-        time: '04:00 PM',
-        status: 'Shipped',
-        location: 'Los Angeles, CA',
-        description: 'Package has been shipped',
-      },
-      {
-        date: '2026-03-25',
-        time: '10:00 AM',
-        status: 'Order Processed',
-        location: 'Warehouse',
-        description: 'Order has been processed and packed',
-      },
-    ],
-  }
+  useEffect(() => {
+    const loadOrder = async () => {
+      if (!orderId) {
+        setError('No order ID provided')
+        setIsLoading(false)
+        return
+      }
+      try {
+        setIsLoading(true)
+        const order = await ordersApi.getOrder(orderId)
+        setOrderDetails({
+          id: order.id,
+          date: order.createdAt,
+          status: order.status,
+          items: order.items.map((item: any) => ({
+            id: item.id,
+            name: item.product.name,
+            image: item.product.image,
+            quantity: item.quantity,
+            price: item.price,
+          })),
+          shippingAddress: {
+            name: `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`,
+            address: order.shippingAddress.address,
+            city: order.shippingAddress.city,
+            state: order.shippingAddress.state,
+            zipCode: order.shippingAddress.zipCode,
+            phone: order.shippingAddress.phone,
+          },
+          total: order.total,
+          shipping: order.shipping,
+          tax: order.tax,
+        })
+      } catch (error) {
+        console.error('Failed to fetch order:', error)
+        setError('Failed to load order details')
+        toast.error('Failed to load order details')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadOrder()
+  }, [orderId])
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'processing':
+      case 'pending':
         return <Clock className="w-6 h-6 text-yellow-500" />
+      case 'processing':
+        return <Clock className="w-6 h-6 text-blue-500" />
       case 'shipped':
         return <Package className="w-6 h-6 text-blue-500" />
-      case 'out-for-delivery':
-        return <Truck className="w-6 h-6 text-orange-500" />
       case 'delivered':
         return <CheckCircle className="w-6 h-6 text-sage" />
+      case 'cancelled':
+        return <X className="w-6 h-6 text-red-500" />
       default:
         return <Clock className="w-6 h-6 text-slate" />
     }
@@ -151,14 +109,16 @@ function OrderTracking() {
 
   const getStatusText = (status: string) => {
     switch (status) {
+      case 'pending':
+        return 'Order Placed'
       case 'processing':
         return 'Processing'
       case 'shipped':
         return 'Shipped'
-      case 'out-for-delivery':
-        return 'Out for Delivery'
       case 'delivered':
         return 'Delivered'
+      case 'cancelled':
+        return 'Cancelled'
       default:
         return status
     }
@@ -166,96 +126,55 @@ function OrderTracking() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'processing':
+      case 'pending':
         return 'bg-yellow-100 text-yellow-800'
-      case 'shipped':
+      case 'processing':
         return 'bg-blue-100 text-blue-800'
-      case 'out-for-delivery':
-        return 'bg-orange-100 text-orange-800'
+      case 'shipped':
+        return 'bg-purple-100 text-purple-800'
       case 'delivered':
         return 'bg-green-100 text-green-800'
+      case 'cancelled':
+        return 'bg-red-100 text-red-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
   }
 
-  const copyTrackingNumber = () => {
-    navigator.clipboard.writeText(orderDetails.trackingNumber)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-snow flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-nordic-blue"></div>
+      </div>
+    )
   }
 
-  const handleLogout = () => {
-    logout()
-    navigate('/login')
+  if (error || !orderDetails) {
+    return (
+      <div className="min-h-screen bg-snow flex items-center justify-center">
+        <div className="text-center">
+          <Package className="w-16 h-16 text-stone-300 mx-auto mb-4" />
+          <h2 className="text-2xl font-semibold text-charcoal mb-4">
+            {error || 'Order not found'}
+          </h2>
+          <Button onClick={() => navigate('/profile')}>Back to Profile</Button>
+        </div>
+      </div>
+    )
   }
+
+  const statusStep = orderDetails.status === 'pending'
+    ? 0
+    : orderDetails.status === 'processing'
+    ? 1
+    : orderDetails.status === 'shipped'
+    ? 2
+    : orderDetails.status === 'delivered'
+    ? 3
+    : -1
 
   return (
-    <div className="min-h-screen bg-snow">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-stone-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-nordic-blue flex items-center justify-center">
-                <svg
-                  className="w-4 h-4 text-white"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                  <path d="M2 17l10 5 10-5" />
-                </svg>
-              </div>
-              <span className="text-lg font-semibold text-charcoal">Socker Studio</span>
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate('/cart')}
-                className="relative p-2 text-charcoal hover:text-nordic-blue transition-colors"
-              >
-                <ShoppingCart className="w-5 h-5" />
-              </button>
-              <button className="relative p-2 text-charcoal hover:text-nordic-blue transition-colors">
-                <Heart className="w-5 h-5" />
-              </button>
-
-              {/* User menu */}
-              <div className="flex items-center gap-3 pl-4 border-l border-stone-200">
-                <div className="w-8 h-8 rounded-full bg-sage/20 flex items-center justify-center overflow-hidden">
-                  {user?.photoURL ? (
-                    <img
-                      src={user.photoURL}
-                      alt={user.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-4 h-4 text-sage" />
-                  )}
-                </div>
-                <div className="hidden sm:block">
-                  <p className="text-sm font-medium text-charcoal">{user?.name}</p>
-                  <p className="text-xs text-slate">{user?.email}</p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleLogout}
-                  className="text-slate hover:text-charcoal"
-                >
-                  <LogOut className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <Layout>
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
@@ -297,7 +216,13 @@ function OrderTracking() {
                     {getStatusText(orderDetails.status)}
                   </h2>
                   <p className="text-slate">
-                    Estimated delivery: {orderDetails.estimatedDelivery}
+                    {orderDetails.status === 'delivered'
+                      ? 'Your order has been delivered'
+                      : orderDetails.status === 'shipped'
+                      ? 'Your order has been shipped'
+                      : orderDetails.status === 'cancelled'
+                      ? 'This order has been cancelled'
+                      : 'Estimated delivery will be available once shipped'}
                   </p>
                 </div>
               </div>
@@ -305,18 +230,11 @@ function OrderTracking() {
               {/* Progress Bar */}
               <div className="mb-8">
                 <div className="flex justify-between mb-2">
-                  {['Order Placed', 'Shipped', 'Out for Delivery', 'Delivered'].map((step, index) => (
+                  {['Order Placed', 'Processing', 'Shipped', 'Delivered'].map((step, index) => (
                     <div
                       key={step}
                       className={`text-xs font-medium ${
-                        index <=
-                        (orderDetails.status === 'processing'
-                          ? 0
-                          : orderDetails.status === 'shipped'
-                          ? 1
-                          : orderDetails.status === 'out-for-delivery'
-                          ? 2
-                          : 3)
+                        statusStep >= 0 && index <= statusStep
                           ? 'text-nordic-blue'
                           : 'text-slate'
                       }`}
@@ -329,75 +247,42 @@ function OrderTracking() {
                   <div
                     className="h-full bg-nordic-blue transition-all duration-500"
                     style={{
-                      width: `${
-                        orderDetails.status === 'processing'
-                          ? 25
-                          : orderDetails.status === 'shipped'
-                          ? 50
-                          : orderDetails.status === 'out-for-delivery'
-                          ? 75
-                          : 100
-                      }%`,
+                      width: `${statusStep >= 0 ? (statusStep / 3) * 100 : 0}%`,
                     }}
                   />
                 </div>
               </div>
-
-              {/* Tracking Number */}
-              <div className="flex items-center justify-between p-4 bg-frost rounded-xl">
-                <div>
-                  <p className="text-sm text-slate">Tracking Number</p>
-                  <p className="font-mono font-medium text-charcoal">{orderDetails.trackingNumber}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-slate">{orderDetails.carrier}</span>
-                  <button
-                    onClick={copyTrackingNumber}
-                    className="p-2 text-slate hover:text-nordic-blue transition-colors"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </button>
-                  {copied && <span className="text-xs text-sage">Copied!</span>}
-                </div>
-              </div>
             </div>
 
-            {/* Tracking Timeline */}
+            {/* Order Summary */}
             <div className="bg-white rounded-2xl border border-stone-100 p-6">
-              <h3 className="text-lg font-semibold text-charcoal mb-6">Tracking History</h3>
-              <div className="space-y-6">
-                {orderDetails.trackingEvents.map((event, index) => (
-                  <div key={index} className="flex gap-4">
-                    <div className="flex flex-col items-center">
-                      <div
-                        className={`w-3 h-3 rounded-full ${
-                          index === 0 ? 'bg-nordic-blue' : 'bg-stone-200'
-                        }`}
-                      />
-                      {index < orderDetails.trackingEvents.length - 1 && (
-                        <div className="w-0.5 h-12 bg-stone-100 mt-2" />
-                      )}
-                    </div>
-                    <div className="flex-1 pb-6">
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="font-medium text-charcoal">{event.status}</p>
-                        <span className="text-sm text-slate">
-                          {event.date} at {event.time}
-                        </span>
-                      </div>
-                      <p className="text-sm text-slate mb-1">{event.description}</p>
-                      <div className="flex items-center gap-1 text-xs text-slate">
-                        <MapPin className="w-3 h-3" />
-                        {event.location}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <h3 className="text-lg font-semibold text-charcoal mb-4">Order Summary</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate">Order Date</span>
+                  <span className="text-charcoal">{new Date(orderDetails.date).toLocaleDateString()}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate">Subtotal</span>
+                  <span className="text-charcoal">${(orderDetails.total - orderDetails.shipping - orderDetails.tax).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate">Shipping</span>
+                  <span className="text-charcoal">${orderDetails.shipping.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate">Tax</span>
+                  <span className="text-charcoal">${orderDetails.tax.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between font-semibold pt-3 border-t border-stone-100">
+                  <span className="text-charcoal">Total</span>
+                  <span className="text-nordic-blue">${orderDetails.total.toFixed(2)}</span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Order Summary */}
+          {/* Order Summary Sidebar */}
           <div className="lg:col-span-1 space-y-6">
             {/* Delivery Address */}
             <div className="bg-white rounded-2xl border border-stone-100 p-6">
@@ -437,14 +322,6 @@ function OrderTracking() {
                   </div>
                 ))}
               </div>
-              <div className="border-t border-stone-100 mt-4 pt-4">
-                <div className="flex justify-between">
-                  <span className="font-semibold text-charcoal">Total</span>
-                  <span className="font-semibold text-nordic-blue">
-                    ${orderDetails.items.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)}
-                  </span>
-                </div>
-              </div>
             </div>
 
             {/* Need Help */}
@@ -464,7 +341,7 @@ function OrderTracking() {
           </div>
         </div>
       </main>
-    </div>
+    </Layout>
   )
 }
 

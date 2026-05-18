@@ -8,13 +8,13 @@ import { useFavoritesStore } from '@/store/favoritesStore'
 import { useReviewStore } from '@/store/reviewStore'
 import { productsApi } from '@/lib/api'
 import { type Product, type Review } from '@/schemas'
+import Layout from '@/components/Layout'
 import {
   ShoppingCart,
   Heart,
   Star,
   Plus,
   Minus,
-  ArrowLeft,
   Truck,
   Shield,
   RotateCcw,
@@ -105,51 +105,8 @@ function ProductDetail() {
   const averageRating = getAverageRating(product.id) || product.rating
 
   return (
-    <div className="min-h-screen bg-snow">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-stone-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <button
-              onClick={() => navigate('/')}
-              className="flex items-center gap-2 text-charcoal hover:text-nordic-blue transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back to Shop</span>
-            </button>
-
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-nordic-blue flex items-center justify-center">
-                <svg
-                  className="w-4 h-4 text-white"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                  <path d="M2 17l10 5 10-5" />
-                </svg>
-              </div>
-              <span className="text-lg font-semibold text-charcoal">Socker Studio</span>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <button className="relative p-2 text-charcoal hover:text-nordic-blue transition-colors">
-                <ShoppingCart className="w-5 h-5" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-nordic-blue text-white text-xs rounded-full flex items-center justify-center">
-                    {cartCount}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <Layout>
       {/* Main content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-slate mb-8">
           <button onClick={() => navigate('/')} className="hover:text-nordic-blue transition-colors">
@@ -411,7 +368,6 @@ function ProductDetail() {
             </div>
           </div>
         </div>
-      </main>
 
       {/* Cart summary - floating */}
       {cart.length > 0 && (
@@ -436,7 +392,7 @@ function ProductDetail() {
           </Button>
         </div>
       )}
-    </div>
+    </Layout>
   )
 }
 

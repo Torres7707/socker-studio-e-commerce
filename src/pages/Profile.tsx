@@ -1,14 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuthStore } from '@/store/authStore'
+import { usersApi, ordersApi } from '@/lib/api'
+import { toast } from 'sonner'
+import Layout from '@/components/Layout'
 import {
-  ShoppingCart,
-  Heart,
   User,
-  LogOut,
   ChevronRight,
   MapPin,
   Package,
@@ -30,12 +30,37 @@ interface Address {
   isDefault: boolean
 }
 
+interface OrderItem {
+  id: string
+  productId: string
+  quantity: number
+  price: number
+  product: {
+    id: string
+    name: string
+    image: string
+    price: number
+    category: string
+  }
+}
+
 interface Order {
   id: string
   date: string
-  status: 'pending' | 'processing' | 'shipped' | 'delivered'
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
   total: number
-  items: number
+  items: OrderItem[]
+  shippingAddress?: {
+    firstName: string
+    lastName: string
+    email: string
+    phone: string
+    address: string
+    city: string
+    state: string
+    zipCode: string
+    country: string
+  }
 }
 
 function Profile() {
@@ -48,41 +73,11 @@ function Profile() {
     email: user?.email || '',
     phone: '',
   })
-  const [addresses, setAddresses] = useState<Address[]>([
-    {
-      id: '1',
-      name: 'Home',
-      street: '123 Nordic Street',
-      city: 'San Francisco',
-      state: 'CA',
-      zipCode: '94102',
-      country: 'United States',
-      isDefault: true,
-    },
-  ])
-  const [orders] = useState<Order[]>([
-    {
-      id: 'SS12345678',
-      date: '2026-03-25',
-      status: 'delivered',
-      total: 478.00,
-      items: 3,
-    },
-    {
-      id: 'SS12345679',
-      date: '2026-03-20',
-      status: 'shipped',
-      total: 189.00,
-      items: 1,
-    },
-    {
-      id: 'SS12345680',
-      date: '2026-03-15',
-      status: 'processing',
-      total: 299.00,
-      items: 1,
-    },
-  ])
+  const [addresses, setAddresses] = useState<Address[]>([])
+  const [orders, setOrders] = useState<Order[]>([])
+  const [addressesLoading, setAddressesLoading] = useState(true)
+  const [ordersLoading, setOrdersLoading] = useState(true)
+  const [saveLoading, setSaveLoading] = useState(false)
   const [showAddAddress, setShowAddAddress] = useState(false)
   const [newAddress, setNewAddress] = useState({
     name: '',
@@ -93,45 +88,113 @@ function Profile() {
     country: 'United States',
   })
 
-  const handleLogout = () => {
-    logout()
-    navigate('/login')
-  }
-
-  const handleSaveProfile = () => {
-    setIsEditing(false)
-    // In a real app, this would save to the backend
-  }
-
-  const handleAddAddress = () => {
-    const address: Address = {
-      id: Date.now().toString(),
-      ...newAddress,
-      isDefault: addresses.length === 0,
+  // Fetch addresses on mount
+  useEffect(() => {
+    const loadAddresses = async () => {
+      try {
+        setAddressesLoading(true)
+        const data = await usersApi.getAddresses()
+        setAddresses(data)
+      } catch (error) {
+        console.error('Failed to fetch addresses:', error)
+        toast.error('Failed to load addresses')
+      } finally {
+        setAddressesLoading(false)
+      }
     }
-    setAddresses([...addresses, address])
-    setShowAddAddress(false)
-    setNewAddress({
-      name: '',
-      street: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      country: 'United States',
-    })
+    loadAddresses()
+  }, [])
+
+  // Fetch orders on mount
+  useEffect(() => {
+    const loadOrders = async () => {
+      try {
+        setOrdersLoading(true)
+        const data = await ordersApi.getOrders()
+        setOrders(data.map((order: any) => ({
+          id: order.id,
+          date: order.createdAt,
+          status: order.status,
+          total: order.total,
+          items: order.items,
+          shippingAddress: order.shippingAddress,
+        })))
+      } catch (error) {
+        console.error('Failed to fetch orders:', error)
+        toast.error('Failed to load orders')
+      } finally {
+        setOrdersLoading(false)
+      }
+    }
+    loadOrders()
+  }, [])
+
+  const handleSaveProfile = async () => {
+    try {
+      setSaveLoading(true)
+      const updatedUser = await usersApi.updateProfile({
+        name: profile.name,
+        email: profile.email,
+      })
+      useAuthStore.setState({ user: updatedUser })
+      setIsEditing(false)
+      toast.success('Profile updated successfully')
+    } catch (error) {
+      console.error('Failed to update profile:', error)
+      toast.error('Failed to update profile')
+    } finally {
+      setSaveLoading(false)
+    }
   }
 
-  const handleDeleteAddress = (id: string) => {
-    setAddresses(addresses.filter((addr) => addr.id !== id))
+  const handleAddAddress = async () => {
+    try {
+      const address = await usersApi.addAddress({
+        ...newAddress,
+        isDefault: addresses.length === 0,
+      })
+      setAddresses([...addresses, address])
+      setShowAddAddress(false)
+      setNewAddress({
+        name: '',
+        street: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        country: 'United States',
+      })
+      toast.success('Address added successfully')
+    } catch (error) {
+      console.error('Failed to add address:', error)
+      toast.error('Failed to add address')
+    }
   }
 
-  const handleSetDefaultAddress = (id: string) => {
-    setAddresses(
-      addresses.map((addr) => ({
-        ...addr,
-        isDefault: addr.id === id,
-      }))
-    )
+  const handleDeleteAddress = async (id: string) => {
+    try {
+      await usersApi.deleteAddress(id)
+      setAddresses(addresses.filter((addr) => addr.id !== id))
+      toast.success('Address deleted')
+    } catch (error) {
+      console.error('Failed to delete address:', error)
+      toast.error('Failed to delete address')
+    }
+  }
+
+  const handleSetDefaultAddress = async (id: string) => {
+    try {
+      await usersApi.updateAddress(id, { isDefault: true })
+      setAddresses(
+        addresses.map((addr) => ({
+          ...addr,
+          isDefault: addr.id === id,
+        }))
+      )
+      toast.success('Default address updated')
+    } catch (error) {
+      console.error('Failed to update default address:', error)
+      toast.error('Failed to update default address')
+    }
   }
 
   const getStatusColor = (status: Order['status']) => {
@@ -144,6 +207,8 @@ function Profile() {
         return 'bg-purple-100 text-purple-800'
       case 'delivered':
         return 'bg-green-100 text-green-800'
+      case 'cancelled':
+        return 'bg-red-100 text-red-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -159,77 +224,15 @@ function Profile() {
         return 'Shipped'
       case 'delivered':
         return 'Delivered'
+      case 'cancelled':
+        return 'Cancelled'
       default:
         return status
     }
   }
 
   return (
-    <div className="min-h-screen bg-snow">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-stone-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-nordic-blue flex items-center justify-center">
-                <svg
-                  className="w-4 h-4 text-white"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                  <path d="M2 17l10 5 10-5" />
-                </svg>
-              </div>
-              <span className="text-lg font-semibold text-charcoal">Socker Studio</span>
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate('/cart')}
-                className="relative p-2 text-charcoal hover:text-nordic-blue transition-colors"
-              >
-                <ShoppingCart className="w-5 h-5" />
-              </button>
-              <button className="relative p-2 text-charcoal hover:text-nordic-blue transition-colors">
-                <Heart className="w-5 h-5" />
-              </button>
-
-              {/* User menu */}
-              <div className="flex items-center gap-3 pl-4 border-l border-stone-200">
-                <div className="w-8 h-8 rounded-full bg-sage/20 flex items-center justify-center overflow-hidden">
-                  {user?.photoURL ? (
-                    <img
-                      src={user.photoURL}
-                      alt={user.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-4 h-4 text-sage" />
-                  )}
-                </div>
-                <div className="hidden sm:block">
-                  <p className="text-sm font-medium text-charcoal">{user?.name}</p>
-                  <p className="text-xs text-slate">{user?.email}</p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleLogout}
-                  className="text-slate hover:text-charcoal"
-                >
-                  <LogOut className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <Layout>
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
@@ -368,7 +371,9 @@ function Profile() {
 
                 {isEditing && (
                   <div className="mt-6 flex justify-end">
-                    <Button onClick={handleSaveProfile}>Save Changes</Button>
+                    <Button onClick={handleSaveProfile} disabled={saveLoading}>
+                      {saveLoading ? 'Saving...' : 'Save Changes'}
+                    </Button>
                   </div>
                 )}
               </div>
@@ -386,47 +391,53 @@ function Profile() {
                 </div>
 
                 <div className="space-y-4">
-                  {addresses.map((address) => (
-                    <div
-                      key={address.id}
-                      className="p-4 border border-stone-200 rounded-xl relative"
-                    >
-                      {address.isDefault && (
-                        <span className="absolute top-4 right-4 px-2 py-1 bg-sage text-white text-xs font-medium rounded">
-                          Default
-                        </span>
-                      )}
-                      <h3 className="font-medium text-charcoal mb-2">{address.name}</h3>
-                      <p className="text-slate text-sm">
-                        {address.street}
-                        <br />
-                        {address.city}, {address.state} {address.zipCode}
-                        <br />
-                        {address.country}
-                      </p>
-                      <div className="flex gap-2 mt-4">
-                        {!address.isDefault && (
+                  {addressesLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-nordic-blue"></div>
+                    </div>
+                  ) : (
+                    addresses.map((address) => (
+                      <div
+                        key={address.id}
+                        className="p-4 border border-stone-200 rounded-xl relative"
+                      >
+                        {address.isDefault && (
+                          <span className="absolute top-4 right-4 px-2 py-1 bg-sage text-white text-xs font-medium rounded">
+                            Default
+                          </span>
+                        )}
+                        <h3 className="font-medium text-charcoal mb-2">{address.name}</h3>
+                        <p className="text-slate text-sm">
+                          {address.street}
+                          <br />
+                          {address.city}, {address.state} {address.zipCode}
+                          <br />
+                          {address.country}
+                        </p>
+                        <div className="flex gap-2 mt-4">
+                          {!address.isDefault && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleSetDefaultAddress(address.id)}
+                            >
+                              <Check className="w-4 h-4 mr-1" />
+                              Set Default
+                            </Button>
+                          )}
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleSetDefaultAddress(address.id)}
+                            onClick={() => handleDeleteAddress(address.id)}
+                            className="text-rose-ash hover:text-rose-ash"
                           >
-                            <Check className="w-4 h-4 mr-1" />
-                            Set Default
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            Delete
                           </Button>
-                        )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteAddress(address.id)}
-                          className="text-rose-ash hover:text-rose-ash"
-                        >
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          Delete
-                        </Button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
 
                 {/* Add Address Modal */}
@@ -531,34 +542,40 @@ function Profile() {
                 <h2 className="text-xl font-semibold text-charcoal mb-6">Order History</h2>
 
                 <div className="space-y-4">
-                  {orders.map((order) => (
-                    <div
-                      key={order.id}
-                      onClick={() => navigate(`/order/${order.id}`)}
-                      className="p-4 border border-stone-200 rounded-xl hover:border-nordic-blue transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <div>
-                          <p className="font-medium text-charcoal">Order #{order.id}</p>
-                          <p className="text-sm text-slate">{order.date}</p>
-                        </div>
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                            order.status
-                          )}`}
-                        >
-                          {getStatusText(order.status)}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <p className="text-slate text-sm">{order.items} item(s)</p>
-                        <p className="font-semibold text-charcoal">${order.total.toFixed(2)}</p>
-                      </div>
+                  {ordersLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-nordic-blue"></div>
                     </div>
-                  ))}
+                  ) : (
+                    orders.map((order) => (
+                      <div
+                        key={order.id}
+                        onClick={() => navigate(`/order/${order.id}`)}
+                        className="p-4 border border-stone-200 rounded-xl hover:border-nordic-blue transition-colors cursor-pointer"
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <div>
+                            <p className="font-medium text-charcoal">Order #{order.id}</p>
+                            <p className="text-sm text-slate">{new Date(order.date).toLocaleDateString()}</p>
+                          </div>
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                              order.status
+                            )}`}
+                          >
+                            {getStatusText(order.status)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <p className="text-slate text-sm">{order.items.length} item(s)</p>
+                          <p className="font-semibold text-charcoal">${order.total.toFixed(2)}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
 
-                {orders.length === 0 && (
+                {orders.length === 0 && !ordersLoading && (
                   <div className="text-center py-12">
                     <Package className="w-16 h-16 text-stone-300 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-charcoal mb-2">No orders yet</h3>
@@ -617,7 +634,7 @@ function Profile() {
           </div>
         </div>
       </main>
-    </div>
+    </Layout>
   )
 }
 

@@ -121,27 +121,25 @@ export const useAuthStore = create<AuthState>()(
           const result = await signInWithPopup(auth, googleProvider)
           const firebaseUser = result.user
 
-          // Sync with backend to get JWT token
-          const response = await fetch(`${API_BASE_URL}/auth/register`, {
+          const response = await fetch(`${API_BASE_URL}/auth/oauth`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              username: firebaseUser.email?.split('@')[0] || firebaseUser.uid,
               email: firebaseUser.email,
-              password: firebaseUser.uid, // Use Firebase UID as password
               name: firebaseUser.displayName || 'User',
+              photoURL: firebaseUser.photoURL || undefined,
+              provider: 'google',
+              firebaseUid: firebaseUser.uid,
             }),
           })
 
-          if (response.ok) {
-            const { user, token } = await response.json()
-            localStorage.setItem('auth_token', token)
-            set({ user, isAuthenticated: true, isLoading: false })
-          } else {
-            // Registration failed, still use Firebase user
-            const user = convertFirebaseUser(firebaseUser)
-            set({ user, isAuthenticated: true, isLoading: false })
+          if (!response.ok) {
+            throw new Error('OAuth login failed')
           }
+
+          const { user, token } = await response.json()
+          localStorage.setItem('auth_token', token)
+          set({ user, isAuthenticated: true, isLoading: false })
           return true
         } catch (error) {
           console.error('Google login error:', error)
@@ -156,26 +154,25 @@ export const useAuthStore = create<AuthState>()(
           const result = await signInWithPopup(auth, githubProvider)
           const firebaseUser = result.user
 
-          // Sync with backend to get JWT token
-          const response = await fetch(`${API_BASE_URL}/auth/register`, {
+          const response = await fetch(`${API_BASE_URL}/auth/oauth`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              username: firebaseUser.email?.split('@')[0] || firebaseUser.uid,
               email: firebaseUser.email,
-              password: firebaseUser.uid,
               name: firebaseUser.displayName || 'User',
+              photoURL: firebaseUser.photoURL || undefined,
+              provider: 'github',
+              firebaseUid: firebaseUser.uid,
             }),
           })
 
-          if (response.ok) {
-            const { user, token } = await response.json()
-            localStorage.setItem('auth_token', token)
-            set({ user, isAuthenticated: true, isLoading: false })
-          } else {
-            const user = convertFirebaseUser(firebaseUser)
-            set({ user, isAuthenticated: true, isLoading: false })
+          if (!response.ok) {
+            throw new Error('OAuth login failed')
           }
+
+          const { user, token } = await response.json()
+          localStorage.setItem('auth_token', token)
+          set({ user, isAuthenticated: true, isLoading: false })
           return true
         } catch (error: unknown) {
           const firebaseError = error as { code?: string; credential?: AuthCredential }

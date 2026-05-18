@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import bcrypt from 'bcryptjs'
 import { prisma } from '../utils/prisma'
-import { RegisterSchema, LoginSchema, RegisterInput, LoginInput } from '../schemas'
+import { RegisterSchema, LoginSchema, OAuthSchema, RegisterInput, LoginInput, OAuthInput } from '../schemas'
 
 export default async function authRoutes(fastify: FastifyInstance) {
   // Register
@@ -65,6 +65,78 @@ export default async function authRoutes(fastify: FastifyInstance) {
     }
   })
   
+  // OAuth login/register (find-or-create)
+  fastify.post('/oauth', async (request: FastifyRequest<{ Body: OAuthInput }>, reply: FastifyReply) => {
+    try {
+      const body = OAuthSchema.parse(request.body)
+
+      const userSelect = {
+        id: true,
+        username: true,
+        email: true,
+        name: true,
+        photoURL: true,
+        provider: true,
+        createdAt: true
+      }
+
+      // Try to find existing user by email
+      const existingUser = await prisma.user.findUnique({
+        where: { email: body.email }
+      })
+
+      if (existingUser) {
+        // User exists - update provider/photoURL if needed
+        const user = await prisma.user.update({
+          where: { id: existingUser.id },
+          data: {
+            ...(existingUser.provider !== body.provider && { provider: body.provider }),
+            ...(body.photoURL && existingUser.photoURL !== body.photoURL && { photoURL: body.photoURL }),
+            ...(body.firebaseUid && !existingUser.firebaseUid && { firebaseUid: body.firebaseUid }),
+          },
+          select: userSelect
+        })
+
+        const token = fastify.jwt.sign({ userId: user.id }, { expiresIn: '24h' })
+        return reply.send({ user, token })
+      }
+
+      // User doesn't exist - create new user
+      let username = body.email.split('@')[0]
+
+      // Handle username collision
+      const existingUsername = await prisma.user.findUnique({ where: { username } })
+      if (existingUsername) {
+        username = `${username}_${Math.random().toString(36).slice(2, 8)}`
+      }
+
+      // Generate a random password hash for OAuth users (they don't use password login)
+      const passwordHash = await bcrypt.hash(Math.random().toString(36), 12)
+
+      const user = await prisma.user.create({
+        data: {
+          username,
+          email: body.email,
+          passwordHash,
+          name: body.name,
+          photoURL: body.photoURL,
+          provider: body.provider,
+          firebaseUid: body.firebaseUid,
+        },
+        select: userSelect
+      })
+
+      const token = fastify.jwt.sign({ userId: user.id }, { expiresIn: '24h' })
+      return reply.status(201).send({ user, token })
+    } catch (error) {
+      fastify.log.error(error)
+      return reply.status(400).send({
+        error: 'OAuth error',
+        message: 'Failed to process OAuth login'
+      })
+    }
+  })
+
   // Login
   fastify.post('/login', async (request: FastifyRequest<{ Body: LoginInput }>, reply: FastifyReply) => {
     try {

@@ -18,24 +18,27 @@
 
 ### 用户系统
 - ✅ 用户注册/登录（邮箱、Google、GitHub）
-- ✅ 个人资料管理
-- ✅ 收货地址管理
-- ✅ 订单历史查看
+- ✅ OAuth 登录支持重复访问（POST /auth/oauth）
+- ✅ 个人资料管理（已连接后端 API）
+- ✅ 收货地址管理（增删改查 via API）
+- ✅ 订单历史查看（真实数据 from API）
 
 ### 商品系统
 - ✅ 商品列表展示
-- ✅ 多维度筛选（价格、评分、分类）
+- ✅ 多维度筛选（价格、评分、多分类）
+- ✅ 服务端筛选（无客户端重复过滤）
 - ✅ 搜索功能（历史记录、热门推荐）
 - ✅ 商品详情页
 - ✅ 商品评价系统
 
 ### 购物系统
 - ✅ 购物车管理
-- ✅ 收藏功能
+- ✅ 收藏功能（与服务器同步）
 - ✅ 结账流程
-- ✅ 订单跟踪
+- ✅ 订单跟踪（真实数据 from API）
 
 ### 界面体验
+- ✅ 共享 Layout 组件（所有页面统一头部导航）
 - ✅ Toast 通知系统
 - ✅ 加载状态管理
 - ✅ 错误处理
@@ -45,7 +48,7 @@
 
 ### 前端
 - **框架**: React 19 + TypeScript
-- **构建**: Vite 6
+- **构建**: Vite 8
 - **样式**: Tailwind CSS 4
 - **状态**: Zustand
 - **路由**: React Router 7
@@ -80,7 +83,8 @@
 │   │   │   ├── input.tsx
 │   │   │   ├── card.tsx
 │   │   │   └── toast.tsx
-│   │   └── Login.tsx      # 登录组件
+│   │   ├── Login.tsx      # 登录组件
+│   │   └── Layout.tsx     # 共享布局组件（含头部导航）
 │   ├── pages/             # 页面组件
 │   │   ├── Home.tsx       # 首页
 │   │   ├── ProductDetail.tsx # 商品详情
@@ -99,8 +103,6 @@
 │   │   ├── firebase.ts    # Firebase 配置
 │   │   ├── api.ts         # API 客户端
 │   │   └── utils.ts       # 工具函数
-│   ├── data/              # 数据
-│   │   └── products.ts    # 商品数据
 │   └── test/              # 测试配置
 │       └── setup.ts
 ├── backend/               # 后端源代码
@@ -220,6 +222,9 @@ Tests  99 passed (99)
 ### 全栈转型
 - [x] 后端 API 开发（Node.js + Fastify）✅
 - [x] 数据库设计（PostgreSQL + Prisma）✅
+- [x] OAuth 登录支持重复访问（POST /auth/oauth）✅
+- [x] 共享 Layout 组件 ✅
+- [x] 代码库清理与 .env.example ✅
 - [ ] 支付集成（Stripe）
 - [ ] 邮件服务（SendGrid）
 - [ ] 文件存储（AWS S3/Cloudinary）
@@ -234,6 +239,17 @@ Tests  99 passed (99)
 - [ ] 评论图片上传
 
 ## 📝 开发日志
+
+### 2026-05-18
+- ✅ 修复 OAuth 重复登录问题（新增 POST /auth/oauth 端点，find-or-create 模式）
+- ✅ 修复首页双重过滤问题（后端支持多分类逗号分隔参数）
+- ✅ 个人中心页面接入真实后端 API（地址、订单、资料保存）
+- ✅ 订单跟踪页面接入真实后端 API（移除所有 mock 数据）
+- ✅ 提取共享 Layout 组件（所有页面统一头部导航）
+- ✅ 清理无用文件（WebLogin.tsx、next-themes、data/products.ts）
+- ✅ 包名从 "my-react-ts-app" 更改为 "socker-studio"
+- ✅ 新增 backend/.env.example 方便新人上手
+- ✅ 修复 rolldown 解析器对嵌套三元 JSX 的解析错误
 
 ### 2026-03-28
 - ✅ 完成 Phase 4 后端 API 开发

@@ -13,6 +13,14 @@ export const LoginSchema = z.object({
   password: z.string().min(1),
 })
 
+export const OAuthSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1).max(100),
+  photoURL: z.string().url().optional(),
+  provider: z.enum(['google', 'github']),
+  firebaseUid: z.string().min(1),
+})
+
 export const UpdateProfileSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   email: z.string().email().optional(),
@@ -37,6 +45,7 @@ export const ProductQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
   category: z.string().optional(),
+  categories: z.string().optional(),
   search: z.string().optional(),
   minPrice: z.coerce.number().nonnegative().optional(),
   maxPrice: z.coerce.number().positive().optional(),
@@ -82,6 +91,7 @@ export const UpdateCartSchema = z.object({
 // Type exports
 export type RegisterInput = z.infer<typeof RegisterSchema>
 export type LoginInput = z.infer<typeof LoginSchema>
+export type OAuthInput = z.infer<typeof OAuthSchema>
 export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>
 export type CreateAddressInput = z.infer<typeof CreateAddressSchema>
 export type UpdateAddressInput = z.infer<typeof UpdateAddressSchema>

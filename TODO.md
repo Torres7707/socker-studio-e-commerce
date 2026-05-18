@@ -6,15 +6,18 @@
 
 ### ✅ Completed Features
 - [x] User authentication system (Firebase - Email/Google/GitHub)
-- [x] Product display and filtering (price, rating, category)
+- [x] OAuth login with repeat access support (POST /auth/oauth)
+- [x] Product display and filtering (price, rating, multi-category)
+- [x] Server-side filtering (no client-side double-filter)
 - [x] Search functionality (history, popular recommendations)
 - [x] Product detail page (images, description, reviews)
 - [x] Shopping cart management (add, delete, quantity adjustment)
-- [x] Favorites functionality (add, remove, persistence)
+- [x] Favorites functionality (add, remove, synced with server)
 - [x] Checkout process (address, payment, confirmation)
-- [x] Order tracking (status timeline, logistics info)
-- [x] User center (profile, addresses, order history)
+- [x] Order tracking (real data from backend API)
+- [x] User center (profile, addresses, order history - all connected to API)
 - [x] Review system (rating, comments, helpful)
+- [x] Shared Layout component (consistent header across all pages)
 - [x] Toast notification system
 - [x] Responsive design
 - [x] Complete test coverage (99 test cases)
@@ -23,6 +26,8 @@
 - [x] Complete RESTful API (auth, products, orders, cart, users, favorites)
 - [x] Database seed data (12 products, 2 users, reviews, addresses)
 - [x] Frontend-backend integration
+- [x] Codebase cleanup (removed unused files and dependencies)
+- [x] Backend .env.example for easier onboarding
 
 ---
 
@@ -88,7 +93,7 @@
 
 - [ ] **Advanced Filtering**
   - [ ] Price range slider
-  - [ ] Multi-select categories
+  - [x] Multi-select categories ✅
   - [ ] Filter condition saving
 
 ### Marketing Features
@@ -157,6 +162,7 @@
 - [x] **User Authentication API** ✅
   - [x] POST /api/auth/register
   - [x] POST /api/auth/login
+  - [x] POST /api/auth/oauth (find-or-create for Google/GitHub)
   - [x] POST /api/auth/logout
   - [x] POST /api/auth/refresh-token
   - [x] POST /api/auth/forgot-password
@@ -411,4 +417,4 @@
 
 ---
 
-*Last Updated: 2026-03-28*
+*Last Updated: 2026-05-18*

@@ -11,7 +11,12 @@ export default async function productRoutes(fastify: FastifyInstance) {
       const where: any = {}
       
       // Category filter
-      if (query.category && query.category !== 'All') {
+      if (query.categories) {
+        const cats = query.categories.split(',').filter(c => c && c !== 'All')
+        if (cats.length > 0) {
+          where.category = { in: cats }
+        }
+      } else if (query.category && query.category !== 'All') {
         where.category = query.category
       }
       

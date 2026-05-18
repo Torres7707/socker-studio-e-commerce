@@ -34,6 +34,7 @@ export const productsApi = {
     page?: number
     limit?: number
     category?: string
+    categories?: string
     search?: string
     minPrice?: number
     maxPrice?: number
@@ -141,6 +142,29 @@ export const authApi = {
     return response.json()
   },
   
+  oauth: async (data: {
+    email: string
+    name: string
+    photoURL?: string
+    provider: 'google' | 'github'
+    firebaseUid: string
+  }) => {
+    const response = await fetch(`${API_BASE_URL}/auth/oauth`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'OAuth login failed')
+    }
+
+    return response.json()
+  },
+
   logout: async () => {
     const response = await fetchWithAuth(`${API_BASE_URL}/auth/logout`, {
       method: 'POST',

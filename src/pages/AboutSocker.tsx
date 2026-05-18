@@ -1,37 +1,13 @@
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Cat, ArrowLeft, Heart } from 'lucide-react'
+import { Cat, Heart } from 'lucide-react'
+import Layout from '@/components/Layout'
 
 function AboutSocker() {
   return (
-    <div className="min-h-screen bg-snow">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-stone-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-nordic-blue flex items-center justify-center">
-                <Cat className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-lg font-semibold text-charcoal">
-                Socker Studio
-              </span>
-            </div>
-
-            {/* Back button */}
-            <Link to="/">
-              <Button variant="ghost" className="flex items-center gap-2">
-                <ArrowLeft className="w-4 h-4" />
-                Back to Home
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
-
+    <Layout>
       {/* Main content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto">
         {/* Hero section */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-nordic-blue/10 mb-6">
@@ -135,7 +111,7 @@ function AboutSocker() {
             </Link>
           </div>
         </div>
-      </main>
+      </div>
 
       {/* Footer */}
       <footer className="bg-white border-t border-stone-100 mt-16">
@@ -151,7 +127,7 @@ function AboutSocker() {
           </div>
         </div>
       </footer>
-    </div>
+    </Layout>
   )
 }
 

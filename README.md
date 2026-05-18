@@ -18,24 +18,27 @@ A modern full-stack e-commerce application with Nordic minimalist design, built 
 
 ### User System
 - ✅ User registration/login (Email, Google, GitHub)
-- ✅ Profile management
-- ✅ Shipping address management
-- ✅ Order history viewing
+- ✅ OAuth login with repeat access support (POST /auth/oauth)
+- ✅ Profile management (connected to backend API)
+- ✅ Shipping address management (CRUD via API)
+- ✅ Order history viewing (real data from API)
 
 ### Product System
 - ✅ Product listing display
-- ✅ Multi-dimensional filtering (price, rating, category)
+- ✅ Multi-dimensional filtering (price, rating, multi-category)
+- ✅ Server-side filtering (no client-side double-filter)
 - ✅ Search functionality (history, popular recommendations)
 - ✅ Product detail page
 - ✅ Product review system
 
 ### Shopping System
 - ✅ Shopping cart management
-- ✅ Favorites functionality
+- ✅ Favorites functionality (synced with server)
 - ✅ Checkout process
-- ✅ Order tracking
+- ✅ Order tracking (real data from API)
 
 ### UI Experience
+- ✅ Shared Layout component (consistent header across all pages)
 - ✅ Toast notification system
 - ✅ Loading state management
 - ✅ Error handling
@@ -45,7 +48,7 @@ A modern full-stack e-commerce application with Nordic minimalist design, built 
 
 ### Frontend
 - **Framework**: React 19 + TypeScript
-- **Build**: Vite 6
+- **Build**: Vite 8
 - **Styling**: Tailwind CSS 4
 - **State**: Zustand
 - **Routing**: React Router 7
@@ -80,7 +83,8 @@ A modern full-stack e-commerce application with Nordic minimalist design, built 
 │   │   │   ├── input.tsx
 │   │   │   ├── card.tsx
 │   │   │   └── toast.tsx
-│   │   └── Login.tsx      # Login component
+│   │   ├── Login.tsx      # Login component
+│   │   └── Layout.tsx     # Shared layout with header
 │   ├── pages/             # Page components
 │   │   ├── Home.tsx       # Home page
 │   │   ├── ProductDetail.tsx # Product detail
@@ -99,8 +103,6 @@ A modern full-stack e-commerce application with Nordic minimalist design, built 
 │   │   ├── firebase.ts    # Firebase config
 │   │   ├── api.ts         # API client
 │   │   └── utils.ts       # Utility functions
-│   ├── data/              # Data
-│   │   └── products.ts    # Product data
 │   └── test/              # Test config
 │       └── setup.ts
 ├── backend/               # Backend source code
@@ -220,6 +222,9 @@ Tests  99 passed (99)
 ### Full-Stack Transformation
 - [x] Backend API development (Node.js + Fastify) ✅
 - [x] Database design (PostgreSQL + Prisma) ✅
+- [x] OAuth login with repeat access (POST /auth/oauth) ✅
+- [x] Shared Layout component ✅
+- [x] Codebase cleanup and .env.example ✅
 - [ ] Payment integration (Stripe)
 - [ ] Email service (SendGrid)
 - [ ] File storage (AWS S3/Cloudinary)
@@ -234,6 +239,17 @@ Tests  99 passed (99)
 - [ ] Review image upload
 
 ## 📝 Development Log
+
+### 2026-05-18
+- ✅ Fixed OAuth repeat login (new POST /auth/oauth endpoint with find-or-create)
+- ✅ Fixed Home page double-filtering (backend now supports multi-category via comma-separated param)
+- ✅ Connected Profile page to real backend API (addresses, orders, profile save)
+- ✅ Connected Order Tracking to real backend API (removed all mock data)
+- ✅ Extracted shared Layout component (consistent header across all pages)
+- ✅ Cleaned up unused files (WebLogin.tsx, next-themes, data/products.ts)
+- ✅ Renamed package from "my-react-ts-app" to "socker-studio"
+- ✅ Added backend .env.example for easier onboarding
+- ✅ Fixed rolldown parser error with nested ternary JSX pattern
 
 ### 2026-03-28
 - ✅ Completed Phase 4 backend API development

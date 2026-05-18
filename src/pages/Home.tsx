@@ -9,13 +9,10 @@ import { useFilterStore, type FilterState } from '@/store/filterStore';
 import { toast } from 'sonner';
 import { productsApi } from '@/lib/api';
 import { type Product } from '@/schemas';
+import Layout from '@/components/Layout';
 import {
-	Cat,
-	ShoppingCart,
 	Heart,
 	Search,
-	User,
-	LogOut,
 	Star,
 	Plus,
 	Minus,
@@ -42,19 +39,17 @@ const SORT_OPTIONS = [
 ] as const satisfies readonly { value: FilterState['sortBy']; label: string }[];
 
 function Home() {
-	const { user, logout } = useAuthStore();
+	const { user } = useAuthStore();
 	const navigate = useNavigate();
 	const {
 		items: cart,
 		addItem,
 		removeItem,
-		getItemCount,
 		getTotal,
 	} = useCartStore();
 	const {
 		favorites,
 		toggleFavorite,
-		getCount: getFavoritesCount,
 		fetchFavorites,
 	} = useFavoritesStore();
 	const {
@@ -90,9 +85,9 @@ function Home() {
 			try {
 				setIsLoading(true);
 				const result = await productsApi.getProducts({
-					category:
+					categories:
 						selectedCategories.length > 0 && !selectedCategories.includes('All')
-							? selectedCategories[0]
+							? selectedCategories.join(',')
 							: undefined,
 					search: searchQuery || undefined,
 					minPrice: priceRange[0] > 0 ? priceRange[0] : undefined,
@@ -111,35 +106,6 @@ function Home() {
 
 		fetchProducts();
 	}, [selectedCategories, searchQuery, priceRange, minRating, sortBy]);
-
-	const filteredProducts = products
-		.filter((product) => {
-			const matchesCategory =
-				selectedCategories.length === 0 ||
-				selectedCategories.includes('All') ||
-				selectedCategories.includes(product.category);
-			const matchesSearch =
-				product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-				product.description.toLowerCase().includes(searchQuery.toLowerCase());
-			const matchesPrice =
-				product.price >= priceRange[0] && product.price <= priceRange[1];
-			const matchesRating = product.rating >= minRating;
-			return matchesCategory && matchesSearch && matchesPrice && matchesRating;
-		})
-		.sort((a, b) => {
-			switch (sortBy) {
-				case 'price-asc':
-					return a.price - b.price;
-				case 'price-desc':
-					return b.price - a.price;
-				case 'rating':
-					return b.rating - a.rating;
-				case 'newest':
-					return b.id.localeCompare(a.id);
-				default:
-					return 0;
-			}
-		});
 
 	const searchSuggestions = getSearchSuggestions(searchQuery);
 
@@ -190,120 +156,24 @@ function Home() {
 	};
 
 	const cartTotal = getTotal();
-	const cartCount = getItemCount();
-	const favoritesCount = getFavoritesCount();
-
-	const handleLogout = () => {
-		logout();
-		navigate('/login');
-	};
 
 	return (
-		<div className="min-h-screen bg-snow">
-			{/* Header */}
-			<header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-stone-100">
-				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-					<div className="flex items-center justify-between h-16">
-						{/* Logo */}
-						<div className="flex items-center gap-2">
-							<div className="w-8 h-8 rounded-lg bg-nordic-blue flex items-center justify-center">
-								<Cat className="w-4 h-4 text-white" />
-							</div>
-							<span className="text-lg font-semibold text-charcoal">
-								Socker Studio
-							</span>
-						</div>
-
-						{/* Search */}
-						<div className="flex-1 max-w-md mx-8">
-							<div className="relative">
-								<Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate" />
-								<Input
-									type="search"
-									placeholder="Search products..."
-									value={searchQuery}
-									onChange={(e) => setSearchQuery(e.target.value)}
-									className="pl-10"
-								/>
-							</div>
-						</div>
-
-						{/* Actions */}
-						<div className="flex items-center gap-4">
-							{/* Cart */}
-							<button
-								onClick={() => navigate('/cart')}
-								className="relative p-2 text-charcoal hover:text-nordic-blue transition-colors"
-							>
-								<ShoppingCart className="w-5 h-5" />
-								{cartCount > 0 && (
-									<span className="absolute -top-1 -right-1 w-5 h-5 bg-nordic-blue text-white text-xs rounded-full flex items-center justify-center">
-										{cartCount}
-									</span>
-								)}
-							</button>
-
-							{/* Favorites */}
-							<button
-								onClick={() => navigate('/favorites')}
-								className="relative p-2 text-charcoal hover:text-nordic-blue transition-colors"
-							>
-								<Heart className="w-5 h-5" />
-								{favoritesCount > 0 && (
-									<span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-ash text-white text-xs rounded-full flex items-center justify-center">
-										{favoritesCount}
-									</span>
-								)}
-							</button>
-
-							{/* About Socker */}
-							<button
-								onClick={() => navigate('/about')}
-								className="relative p-2 text-charcoal hover:text-nordic-blue transition-colors"
-							>
-								<Cat className="w-5 h-5" />
-							</button>
-
-							{/* User menu */}
-							<div className="flex items-center gap-3 pl-4 border-l border-stone-200">
-								<button
-									onClick={() => navigate('/profile')}
-									className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-								>
-									<div className="w-8 h-8 rounded-full bg-sage/20 flex items-center justify-center overflow-hidden">
-										{user?.photoURL ? (
-											<img
-												src={user.photoURL}
-												alt={user.name}
-												className="w-full h-full object-cover"
-											/>
-										) : (
-											<User className="w-4 h-4 text-sage" />
-										)}
-									</div>
-									<div className="hidden sm:block text-left">
-										<p className="text-sm font-medium text-charcoal">
-											{user?.name}
-										</p>
-										<p className="text-xs text-slate">{user?.email}</p>
-									</div>
-								</button>
-								<Button
-									variant="ghost"
-									size="sm"
-									onClick={handleLogout}
-									className="text-slate hover:text-charcoal"
-								>
-									<LogOut className="w-4 h-4" />
-								</Button>
-							</div>
-						</div>
-					</div>
+		<Layout
+			showAbout
+			headerCenter={
+				<div className="relative">
+					<Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate" />
+					<Input
+						type="search"
+						placeholder="Search products..."
+						value={searchQuery}
+						onChange={(e) => setSearchQuery(e.target.value)}
+						className="pl-10"
+					/>
 				</div>
-			</header>
-
+			}
+		>
 			{/* Main content */}
-			<main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 				{/* Welcome section */}
 				<div className="mb-8">
 					<h1 className="text-3xl font-semibold text-charcoal">
@@ -520,7 +390,7 @@ function Home() {
 				{/* Products grid */}
 				{!isLoading && (
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-						{filteredProducts.map((product) => (
+						{products.map((product) => (
 							<div
 								key={product.id}
 								onClick={() => navigate(`/product/${product.id}`)}
@@ -639,14 +509,13 @@ function Home() {
 				)}
 
 				{/* Empty state */}
-				{filteredProducts.length === 0 && (
+				{products.length === 0 && (
 					<div className="text-center py-12">
 						<p className="text-slate">
 							No products found matching your criteria.
 						</p>
 					</div>
 				)}
-			</main>
 
 			{/* Cart summary - floating */}
 			{cart.length > 0 && (
@@ -676,7 +545,7 @@ function Home() {
 					</Button>
 				</div>
 			)}
-		</div>
+		</Layout>
 	);
 }
 

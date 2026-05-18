@@ -1,15 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/store/authStore';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { favoritesApi } from '@/lib/api';
 import { type Product } from '@/schemas';
+import Layout from '@/components/Layout';
 import {
-	ShoppingCart,
 	Heart,
-	User,
-	LogOut,
 	Star,
 	Plus,
 	ChevronRight,
@@ -17,9 +14,8 @@ import {
 } from 'lucide-react';
 
 function Favorites() {
-	const { user, logout } = useAuthStore();
 	const navigate = useNavigate();
-	const { favorites, removeFavorite, getCount, fetchFavorites } = useFavoritesStore();
+	const { removeFavorite, fetchFavorites } = useFavoritesStore();
 	const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 
@@ -41,111 +37,29 @@ function Favorites() {
 		loadFavorites();
 	}, []);
 
-	const favoritesCount = getCount();
-
-	const handleLogout = () => {
-		logout();
-		navigate('/login');
-	};
-
 	return (
-		<div className="min-h-screen bg-snow">
-			{/* Header */}
-			<header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-stone-100">
-				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-					<div className="flex items-center justify-between h-16">
-						{/* Logo */}
-						<div className="flex items-center gap-2">
-							<div className="w-8 h-8 rounded-lg bg-nordic-blue flex items-center justify-center">
-								<svg
-									className="w-4 h-4 text-white"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									strokeWidth="2"
-								>
-									<path d="M12 2L2 7l10 5 10-5-10-5z" />
-									<path d="M2 17l10 5 10-5" />
-								</svg>
-							</div>
-							<span className="text-lg font-semibold text-charcoal">
-								Socker Studio
-							</span>
-						</div>
+		<Layout>
+			{/* Breadcrumb */}
+			<nav className="flex items-center gap-2 text-sm text-slate mb-8">
+				<button
+					onClick={() => navigate('/')}
+					className="hover:text-nordic-blue transition-colors"
+				>
+					Home
+				</button>
+				<ChevronRight className="w-4 h-4" />
+				<span className="text-charcoal">Favorites</span>
+			</nav>
 
-						{/* Actions */}
-						<div className="flex items-center gap-4">
-							<button
-								onClick={() => navigate('/cart')}
-								className="relative p-2 text-charcoal hover:text-nordic-blue transition-colors"
-							>
-								<ShoppingCart className="w-5 h-5" />
-							</button>
-							<button className="relative p-2 text-nordic-blue">
-								<Heart className="w-5 h-5" fill="currentColor" />
-								{favoritesCount > 0 && (
-									<span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-ash text-white text-xs rounded-full flex items-center justify-center">
-										{favoritesCount}
-									</span>
-								)}
-							</button>
-
-							{/* User menu */}
-							<div className="flex items-center gap-3 pl-4 border-l border-stone-200">
-								<div className="w-8 h-8 rounded-full bg-sage/20 flex items-center justify-center overflow-hidden">
-									{user?.photoURL ? (
-										<img
-											src={user.photoURL}
-											alt={user.name}
-											className="w-full h-full object-cover"
-										/>
-									) : (
-										<User className="w-4 h-4 text-sage" />
-									)}
-								</div>
-								<div className="hidden sm:block">
-									<p className="text-sm font-medium text-charcoal">
-										{user?.name}
-									</p>
-									<p className="text-xs text-slate">{user?.email}</p>
-								</div>
-								<Button
-									variant="ghost"
-									size="sm"
-									onClick={handleLogout}
-									className="text-slate hover:text-charcoal"
-								>
-									<LogOut className="w-4 h-4" />
-								</Button>
-							</div>
-						</div>
-					</div>
-				</div>
-			</header>
-
-			{/* Main content */}
-			<main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-				{/* Breadcrumb */}
-				<nav className="flex items-center gap-2 text-sm text-slate mb-8">
-					<button
-						onClick={() => navigate('/')}
-						className="hover:text-nordic-blue transition-colors"
-					>
-						Home
-					</button>
-					<ChevronRight className="w-4 h-4" />
-					<span className="text-charcoal">Favorites</span>
-				</nav>
-
-				<div className="flex items-center justify-between mb-8">
-					<h1 className="text-3xl font-semibold text-charcoal">My Favorites</h1>
-					<button
-						onClick={() => navigate('/')}
-						className="flex items-center gap-2 text-nordic-blue hover:text-nordic-blue-light transition-colors"
-					>
-						Continue Shopping
-					</button>
-				</div>
+			<div className="flex items-center justify-between mb-8">
+				<h1 className="text-3xl font-semibold text-charcoal">My Favorites</h1>
+				<button
+					onClick={() => navigate('/')}
+					className="flex items-center gap-2 text-nordic-blue hover:text-nordic-blue-light transition-colors"
+				>
+					Continue Shopping
+				</button>
+			</div>
 
 			{isLoading ? (
 				<div className="flex items-center justify-center py-16">
@@ -260,8 +174,7 @@ function Favorites() {
 						))}
 					</div>
 				)}
-			</main>
-		</div>
+		</Layout>
 	);
 }
 
