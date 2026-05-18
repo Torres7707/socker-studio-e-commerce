@@ -10,10 +10,19 @@ vi.mock('@/lib/firebase', () => ({
 
 vi.mock('firebase/auth', () => ({
   signInWithPopup: vi.fn(),
-  signOut: vi.fn(),
+  signOut: vi.fn().mockResolvedValue(undefined),
   onAuthStateChanged: vi.fn(),
   linkWithCredential: vi.fn(),
 }))
+
+// Mock the API module
+vi.mock('@/lib/api', () => ({
+  API_BASE_URL: 'http://localhost:3001/api',
+}))
+
+// Mock fetch globally
+const mockFetch = vi.fn()
+global.fetch = mockFetch
 
 describe('AuthStore', () => {
   beforeEach(() => {
@@ -22,6 +31,8 @@ describe('AuthStore', () => {
       isAuthenticated: false,
       isLoading: false,
     })
+    vi.clearAllMocks()
+    localStorage.clear()
   })
 
   it('starts with unauthenticated state', () => {
@@ -32,112 +43,90 @@ describe('AuthStore', () => {
   })
 
   it('handles successful login', async () => {
+    const mockUser = { id: '1', username: 'testuser', email: 'test@example.com', name: 'Test User', provider: 'credentials' }
+    const mockToken = 'mock-jwt-token'
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ user: mockUser, token: mockToken }),
+    })
+
     const { login } = useAuthStore.getState()
-    
     const result = await login('testuser', 'password')
-    
+
     expect(result).toBe(true)
     const { user, isAuthenticated } = useAuthStore.getState()
     expect(user).not.toBeNull()
     expect(user?.username).toBe('testuser')
     expect(isAuthenticated).toBe(true)
+    expect(localStorage.getItem('auth_token')).toBe(mockToken)
   })
 
-  it('handles successful registration', async () => {
-    const { register } = useAuthStore.getState()
-    
-    const result = await register('newuser', 'new@example.com', 'password', 'New User')
-    
-    expect(result).toBe(true)
-    const { user, isAuthenticated } = useAuthStore.getState()
-    expect(user).not.toBeNull()
-    expect(user?.username).toBe('newuser')
-    expect(user?.email).toBe('new@example.com')
-    expect(isAuthenticated).toBe(true)
-  })
+  it('handles login failure', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({ message: 'Invalid credentials' }),
+    })
 
-  it('handles logout', async () => {
-    // First login
-    const { login, logout } = useAuthStore.getState()
-    await login('testuser', 'password')
-    
-    // Then logout
-    await logout()
-    
+    const { login } = useAuthStore.getState()
+    await expect(login('testuser', 'wrongpassword')).rejects.toThrow('Invalid credentials')
+
     const { user, isAuthenticated } = useAuthStore.getState()
     expect(user).toBeNull()
     expect(isAuthenticated).toBe(false)
   })
 
-  it('sets loading state during login', async () => {
-    const { login } = useAuthStore.getState()
-    
-    // Check initial state
-    expect(useAuthStore.getState().isLoading).toBe(false)
-    
-    const result = await login('testuser', 'password')
-    
-    // Check result is successful
-    expect(result).toBe(true)
-    
-    // Check loading state is false after login
-    expect(useAuthStore.getState().isLoading).toBe(false)
-  })
+  it('handles successful registration', async () => {
+    const mockUser = { id: '1', username: 'newuser', email: 'new@example.com', name: 'New User', provider: 'credentials' }
+    const mockToken = 'mock-jwt-token'
 
-  it('sets loading state during registration', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ user: mockUser, token: mockToken }),
+    })
+
     const { register } = useAuthStore.getState()
-    
-    // Check initial state
-    expect(useAuthStore.getState().isLoading).toBe(false)
-    
     const result = await register('newuser', 'new@example.com', 'password', 'New User')
-    
-    // Check result is successful
+
     expect(result).toBe(true)
-    
-    // Check loading state is false after registration
-    expect(useAuthStore.getState().isLoading).toBe(false)
+    const { user, isAuthenticated } = useAuthStore.getState()
+    expect(user).not.toBeNull()
+    expect(user?.username).toBe('newuser')
+    expect(isAuthenticated).toBe(true)
   })
 
-  it('sets loading state during logout', async () => {
-    const { login, logout } = useAuthStore.getState()
-    
+  it('handles logout', async () => {
     // First login
+    const mockUser = { id: '1', username: 'testuser', email: 'test@example.com', name: 'Test User', provider: 'credentials' }
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ user: mockUser, token: 'token' }),
+    })
+
+    const { login, logout } = useAuthStore.getState()
     await login('testuser', 'password')
-    
-    // Check loading state is false before logout
-    expect(useAuthStore.getState().isLoading).toBe(false)
-    
+    expect(localStorage.getItem('auth_token')).toBe('token')
+
+    // Then logout
     await logout()
-    
-    // Check loading state is false after logout
+
+    const { user, isAuthenticated } = useAuthStore.getState()
+    expect(user).toBeNull()
+    expect(isAuthenticated).toBe(false)
+    expect(localStorage.getItem('auth_token')).toBeNull()
+  })
+
+  it('sets loading state during login', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ user: { id: '1' }, token: 'token' }),
+    })
+
     expect(useAuthStore.getState().isLoading).toBe(false)
-  })
 
-  it('creates user with correct provider type', async () => {
     const { login } = useAuthStore.getState()
-    
     await login('testuser', 'password')
-    
-    const { user } = useAuthStore.getState()
-    expect(user?.provider).toBe('credentials')
-  })
 
-  it('generates email from username', async () => {
-    const { login } = useAuthStore.getState()
-    
-    await login('testuser', 'password')
-    
-    const { user } = useAuthStore.getState()
-    expect(user?.email).toBe('testuser@example.com')
-  })
-
-  it('capitalizes username for display name', async () => {
-    const { login } = useAuthStore.getState()
-    
-    await login('testuser', 'password')
-    
-    const { user } = useAuthStore.getState()
-    expect(user?.name).toBe('Testuser')
+    expect(useAuthStore.getState().isLoading).toBe(false)
   })
 })

@@ -9,6 +9,7 @@ import {
   type AuthCredential
 } from 'firebase/auth'
 import { auth, googleProvider, githubProvider } from '@/lib/firebase'
+import { API_BASE_URL } from '@/lib/api'
 import { type User } from '@/schemas'
 
 interface AuthState {
@@ -56,7 +57,7 @@ export const useAuthStore = create<AuthState>()(
         try {
           set({ isLoading: true })
           
-          const response = await fetch('http://localhost:3001/api/auth/login', {
+          const response = await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -87,7 +88,7 @@ export const useAuthStore = create<AuthState>()(
         try {
           set({ isLoading: true })
           
-          const response = await fetch('http://localhost:3001/api/auth/register', {
+          const response = await fetch(`${API_BASE_URL}/auth/register`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -118,8 +119,29 @@ export const useAuthStore = create<AuthState>()(
         try {
           set({ isLoading: true })
           const result = await signInWithPopup(auth, googleProvider)
-          const user = convertFirebaseUser(result.user)
-          set({ user, isAuthenticated: true, isLoading: false })
+          const firebaseUser = result.user
+
+          // Sync with backend to get JWT token
+          const response = await fetch(`${API_BASE_URL}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              username: firebaseUser.email?.split('@')[0] || firebaseUser.uid,
+              email: firebaseUser.email,
+              password: firebaseUser.uid, // Use Firebase UID as password
+              name: firebaseUser.displayName || 'User',
+            }),
+          })
+
+          if (response.ok) {
+            const { user, token } = await response.json()
+            localStorage.setItem('auth_token', token)
+            set({ user, isAuthenticated: true, isLoading: false })
+          } else {
+            // Registration failed, still use Firebase user
+            const user = convertFirebaseUser(firebaseUser)
+            set({ user, isAuthenticated: true, isLoading: false })
+          }
           return true
         } catch (error) {
           console.error('Google login error:', error)
@@ -132,19 +154,36 @@ export const useAuthStore = create<AuthState>()(
         try {
           set({ isLoading: true })
           const result = await signInWithPopup(auth, githubProvider)
-          const user = convertFirebaseUser(result.user)
-          set({ user, isAuthenticated: true, isLoading: false })
+          const firebaseUser = result.user
+
+          // Sync with backend to get JWT token
+          const response = await fetch(`${API_BASE_URL}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              username: firebaseUser.email?.split('@')[0] || firebaseUser.uid,
+              email: firebaseUser.email,
+              password: firebaseUser.uid,
+              name: firebaseUser.displayName || 'User',
+            }),
+          })
+
+          if (response.ok) {
+            const { user, token } = await response.json()
+            localStorage.setItem('auth_token', token)
+            set({ user, isAuthenticated: true, isLoading: false })
+          } else {
+            const user = convertFirebaseUser(firebaseUser)
+            set({ user, isAuthenticated: true, isLoading: false })
+          }
           return true
         } catch (error: unknown) {
           const firebaseError = error as { code?: string; credential?: AuthCredential }
-          
-          // 处理账号已存在的情况
+
           if (firebaseError.code === 'auth/account-exists-with-different-credential' && firebaseError.credential) {
-            // 获取当前登录的用户
             const currentUser = auth.currentUser
             if (currentUser) {
               try {
-                // 关联凭证到当前用户
                 await linkWithCredential(currentUser, firebaseError.credential)
                 const user = convertFirebaseUser(currentUser)
                 set({ user, isAuthenticated: true, isLoading: false })
@@ -156,7 +195,7 @@ export const useAuthStore = create<AuthState>()(
               }
             }
           }
-          
+
           console.error('GitHub login error:', error)
           set({ isLoading: false })
           throw error
@@ -165,6 +204,7 @@ export const useAuthStore = create<AuthState>()(
 
       logout: async (): Promise<void> => {
         try {
+          localStorage.removeItem('auth_token')
           await signOut(auth)
           set({ user: null, isAuthenticated: false, isLoading: false })
         } catch (error) {
@@ -193,7 +233,7 @@ export const useAuthStore = create<AuthState>()(
             return
           }
 
-          const response = await fetch('http://localhost:3001/api/users/profile', {
+          const response = await fetch(`${API_BASE_URL}/users/profile`, {
             headers: {
               'Authorization': `Bearer ${token}`,
             },

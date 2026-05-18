@@ -14,8 +14,13 @@ fastify.register(cors, {
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
 })
 
+if (!process.env.JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET environment variable is not set')
+  process.exit(1)
+}
+
 fastify.register(jwt, {
-  secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production'
+  secret: process.env.JWT_SECRET
 })
 
 // Health check

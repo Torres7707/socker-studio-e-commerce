@@ -5,7 +5,7 @@ import { cartApi } from '@/lib/api'
 interface CartState {
   items: CartItem[]
   isLoading: boolean
-  addItem: (product: Product) => Promise<void>
+  addItem: (product: Product, quantity?: number) => Promise<void>
   removeItem: (productId: string) => Promise<void>
   updateQuantity: (productId: string, quantity: number) => Promise<void>
   clearCart: () => Promise<void>
@@ -29,11 +29,11 @@ export const useCartStore = create<CartState>()((set, get) => ({
     }
   },
 
-  addItem: async (product: Product) => {
+  addItem: async (product: Product, quantity: number = 1) => {
     try {
       set({ isLoading: true })
-      await cartApi.addToCart(product.id, 1)
-      
+      await cartApi.addToCart(product.id, quantity)
+
       // Refresh cart from server
       await get().fetchCart()
     } catch (error) {

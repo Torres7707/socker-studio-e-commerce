@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuthStore } from '@/store/authStore'
 import { useCartStore } from '@/store/cartStore'
+import { ordersApi } from '@/lib/api'
 import {
   ShoppingCart,
   Heart,
@@ -52,6 +53,7 @@ function Checkout() {
   const [cardName, setCardName] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [orderComplete, setOrderComplete] = useState(false)
+  const [orderId, setOrderId] = useState<string | null>(null)
 
   const cartTotal = getTotal()
   const shipping = cartTotal > 100 ? 0 : 9.99
@@ -69,11 +71,28 @@ function Checkout() {
 
   const handlePlaceOrder = async () => {
     setIsProcessing(true)
-    // Simulate order processing
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    setIsProcessing(false)
-    clearCart()
-    setOrderComplete(true)
+    try {
+      const order = await ordersApi.createOrder({
+        shippingAddress: {
+          firstName: shippingAddress.firstName,
+          lastName: shippingAddress.lastName,
+          email: shippingAddress.email,
+          phone: shippingAddress.phone,
+          address: shippingAddress.address,
+          city: shippingAddress.city,
+          state: shippingAddress.state,
+          zipCode: shippingAddress.zipCode,
+          country: shippingAddress.country,
+        },
+      })
+      setOrderId(order.id)
+      clearCart()
+      setOrderComplete(true)
+    } catch (error) {
+      console.error('Failed to place order:', error)
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   if (orderComplete) {
@@ -86,7 +105,7 @@ function Checkout() {
           <h1 className="text-3xl font-semibold text-charcoal mb-4">Order Confirmed!</h1>
           <p className="text-slate mb-2">Thank you for your purchase.</p>
           <p className="text-slate mb-8">
-            Order #SS{Date.now().toString().slice(-8)} has been placed successfully.
+            Order #{orderId?.slice(-8) || 'N/A'} has been placed successfully.
           </p>
           <div className="space-y-3">
             <Button className="w-full" onClick={() => navigate('/')}>

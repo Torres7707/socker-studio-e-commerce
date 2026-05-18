@@ -138,7 +138,7 @@ export default async function productRoutes(fastify: FastifyInstance) {
   fastify.get('/:id/reviews', async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
     try {
       const { id } = request.params
-      
+
       const reviews = await prisma.review.findMany({
         where: { productId: id },
         orderBy: { createdAt: 'desc' },
@@ -150,8 +150,20 @@ export default async function productRoutes(fastify: FastifyInstance) {
           }
         }
       })
-      
-      return reply.send(reviews)
+
+      // Map createdAt to date for frontend compatibility
+      const mappedReviews = reviews.map(review => ({
+        id: review.id,
+        productId: review.productId,
+        userId: review.userId,
+        userName: review.user?.name || 'Anonymous',
+        rating: review.rating,
+        comment: review.comment,
+        date: review.createdAt.toISOString(),
+        helpful: review.helpful,
+      }))
+
+      return reply.send(mappedReviews)
     } catch (error) {
       fastify.log.error(error)
       return reply.status(500).send({
@@ -206,14 +218,14 @@ export default async function productRoutes(fastify: FastifyInstance) {
           comment: body.comment
         }
       })
-      
+
       // Update product rating and review count
       const reviews = await prisma.review.findMany({
         where: { productId: id }
       })
-      
+
       const averageRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
-      
+
       await prisma.product.update({
         where: { id },
         data: {
@@ -221,8 +233,20 @@ export default async function productRoutes(fastify: FastifyInstance) {
           reviews: reviews.length
         }
       })
-      
-      return reply.status(201).send(review)
+
+      // Map to frontend format
+      const mappedReview = {
+        id: review.id,
+        productId: review.productId,
+        userId: review.userId,
+        userName: review.userName,
+        rating: review.rating,
+        comment: review.comment,
+        date: review.createdAt.toISOString(),
+        helpful: review.helpful,
+      }
+
+      return reply.status(201).send(mappedReview)
     } catch (error) {
       fastify.log.error(error)
       return reply.status(400).send({

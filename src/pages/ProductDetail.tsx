@@ -7,7 +7,7 @@ import { useCartStore } from '@/store/cartStore'
 import { useFavoritesStore } from '@/store/favoritesStore'
 import { useReviewStore } from '@/store/reviewStore'
 import { productsApi } from '@/lib/api'
-import { type Product } from '@/schemas'
+import { type Product, type Review } from '@/schemas'
 import {
   ShoppingCart,
   Heart,
@@ -36,11 +36,12 @@ function ProductDetail() {
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [productReviews, setProductReviews] = useState<Review[]>([])
 
   useEffect(() => {
     const fetchProduct = async () => {
       if (!id) return
-      
+
       try {
         setLoading(true)
         setError(null)
@@ -56,6 +57,11 @@ function ProductDetail() {
 
     fetchProduct()
   }, [id])
+
+  useEffect(() => {
+    if (!product) return
+    getProductReviews(product.id).then(setProductReviews)
+  }, [product])
 
   if (loading) {
     return (
@@ -80,31 +86,22 @@ function ProductDetail() {
   }
 
   const addToCart = () => {
-    for (let i = 0; i < quantity; i++) {
-      addItem(product)
-    }
+    addItem(product, quantity)
   }
 
   const handleToggleFavorite = () => {
     toggleFavorite(product.id)
   }
 
-  const handleSubmitReview = () => {
+  const handleSubmitReview = async () => {
     if (!user || !newReview.comment.trim()) return
-    addReview({
-      productId: product.id,
-      userId: user.id,
-      userName: user.name,
-      rating: newReview.rating,
-      comment: newReview.comment.trim(),
-    })
+    await addReview(product.id, { rating: newReview.rating, comment: newReview.comment.trim() })
     setNewReview({ rating: 5, comment: '' })
     setShowReviewForm(false)
   }
 
   const cartTotal = getTotal()
   const cartCount = getItemCount()
-  const productReviews = getProductReviews(product.id)
   const averageRating = getAverageRating(product.id) || product.rating
 
   return (
@@ -401,7 +398,7 @@ function ProductDetail() {
                       </div>
                       <p className="text-slate text-sm mb-3">{review.comment}</p>
                       <button
-                        onClick={() => markHelpful(review.id)}
+                        onClick={() => markHelpful(product.id, review.id)}
                         className="flex items-center gap-1 text-xs text-slate hover:text-nordic-blue transition-colors"
                       >
                         <ThumbsUp className="w-3 h-3" />

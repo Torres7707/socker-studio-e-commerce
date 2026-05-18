@@ -79,6 +79,11 @@ function Home() {
 	const [isLoading, setIsLoading] = useState(true);
 	const searchRef = useRef<HTMLInputElement>(null);
 
+	// Fetch favorites once on mount
+	useEffect(() => {
+		fetchFavorites();
+	}, []);
+
 	// Fetch products from API
 	useEffect(() => {
 		const fetchProducts = async () => {
@@ -96,7 +101,6 @@ function Home() {
 					sortBy: sortBy !== 'default' ? sortBy : undefined,
 				});
 				setProducts(result.products || []);
-				fetchFavorites();
 			} catch (error) {
 				console.error('Failed to fetch products:', error);
 				toast.error('Failed to load products');
@@ -157,12 +161,13 @@ function Home() {
 		toast.success(`Added ${product.name} to cart`);
 	};
 
-	const handleToggleFavorite = (productId: string, e: React.MouseEvent) => {
+	const handleToggleFavorite = async (productId: string, e: React.MouseEvent) => {
 		e.stopPropagation();
-		toggleFavorite(productId);
+		const wasFavorite = favorites.includes(productId);
+		await toggleFavorite(productId);
 		const product = products.find((p) => p.id === productId);
 		if (product) {
-			if (favorites.includes(productId)) {
+			if (wasFavorite) {
 				toast.info(`Removed ${product.name} from favorites`);
 			} else {
 				toast.success(`Added ${product.name} to favorites`);

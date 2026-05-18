@@ -28,65 +28,47 @@ export default async function cartRoutes(fastify: FastifyInstance) {
     }
   })
   
-  // Add to cart
+  // Add to cart (atomic upsert to prevent race conditions)
   fastify.post('/', async (request: FastifyRequest<{ Body: AddToCartInput }>, reply: FastifyReply) => {
     try {
       // Verify JWT token
       await request.jwtVerify()
       const userId = (request.user as any).userId
-      
+
       const body = AddToCartSchema.parse(request.body)
-      
+
       // Check if product exists
       const product = await prisma.product.findUnique({
         where: { id: body.productId }
       })
-      
+
       if (!product) {
         return reply.status(404).send({
           error: 'Product not found',
           message: 'Product with the specified ID does not exist'
         })
       }
-      
-      // Check if item already in cart
-      const existingItem = await prisma.cartItem.findUnique({
+
+      // Atomic upsert: increment if exists, create if not
+      const cartItem = await prisma.cartItem.upsert({
         where: {
           userId_productId: {
             userId,
             productId: body.productId
           }
-        }
+        },
+        update: {
+          quantity: { increment: body.quantity }
+        },
+        create: {
+          userId,
+          productId: body.productId,
+          quantity: body.quantity
+        },
+        include: { product: true }
       })
-      
-      if (existingItem) {
-        // Update quantity
-        const updatedItem = await prisma.cartItem.update({
-          where: { id: existingItem.id },
-          data: {
-            quantity: existingItem.quantity + body.quantity
-          },
-          include: {
-            product: true
-          }
-        })
-        
-        return reply.send(updatedItem)
-      } else {
-        // Create new cart item
-        const cartItem = await prisma.cartItem.create({
-          data: {
-            userId,
-            productId: body.productId,
-            quantity: body.quantity
-          },
-          include: {
-            product: true
-          }
-        })
-        
-        return reply.status(201).send(cartItem)
-      }
+
+      return reply.status(201).send(cartItem)
     } catch (error) {
       fastify.log.error(error)
       return reply.status(400).send({
